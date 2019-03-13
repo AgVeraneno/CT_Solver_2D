@@ -1,0 +1,2 @@
+isGPU,isParallel,isDebug,isPlot_band,isPlot_zoom,isReflect,isRGF,parallel_CPU,material,lattice,direction,brief,SU_type,SU_hopping_size,brick_size,kx_mesh,mesh_start,mesh_stop,CB_idx_start,CB_idx_stop
+0,1,0,0,0,0,1,1,Graphene,BLG,Armchair,AGNR,separate,1,4,7660,113,113,283,283
