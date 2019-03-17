@@ -1,6 +1,4 @@
-import copy, sys, os, time
-sys.path.append('../lib/')
-sys.path.append('../src/')
+import copy, os, time
 import numpy as np
 import CurrentSolver, calBandStructure
 import obj_zone
@@ -172,7 +170,7 @@ if __name__ == '__main__':
     kx1 = np.arange(-0.02, -0.00025, 1e-5)
     kx2 = np.arange(0.00025, 0.02, 1e-5)
     kx = np.append(kx1, kx2)
-    kx = [0.0035,-0.0035]
+    kx = [0.0035,0.0035]
     #kx = np.arange(0.001, 0.008, 0.001)
     input_list = {
         # Assign plotter flag
@@ -191,11 +189,11 @@ if __name__ == '__main__':
         'Ef': 1000,
         ## Assign zone parameters
         # Zone gap height (meV)
-        'zone_gap': [10],
+        'zone_gap': [10,10,10,10,45,40,35,30,0,0,0,0],
         # Zone length (nm)
-        'zone_len': [10],
+        'zone_len': [2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5],
         # Assign voltage drop (mV)
         'zone_V': {'I':0,'O':0},
         # Assign mesh in each zone
-        'zone_mesh': 4}
+        'zone_mesh': 1}
     BarrierSolver(input_list)

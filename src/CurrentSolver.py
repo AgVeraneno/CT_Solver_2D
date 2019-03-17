@@ -1,4 +1,4 @@
-import copy, sys, csv
+import copy, sys, os, csv
 sys.path.append('../lib/')
 sys.path.append('../src/')
 import matplotlib.pyplot as mplot
@@ -210,6 +210,8 @@ class CurrentSolver():
         mplot.suptitle('Transmission & Reflection.'+title)
         mplot.savefig('../figures/TR_'+title+'.png')
     def export2csv(self, filename):
+        if not os.path.exists('../zone_state/'):
+            os.mkdir('../zone_state/')
         with open('../zone_state/TR_'+filename+'.csv', 'w', newline='') as csvfile:
             spamwriter = csv.writer(csvfile, dialect='excel', delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
             spamwriter.writerow(['E','kx','T(K)',"T(K')",'PT','R(K)',"R(K')",'PR','v(K)',"v(K')",'f(K)',"f(K')",'Tr(K)',"Tr(K')",'Rr(K)',"Rr(K')",'vr(K)',"vr(K')",'fr(K)',"fr(K')"])

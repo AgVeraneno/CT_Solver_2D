@@ -1,3 +1,4 @@
+import os
 from matplotlib import pyplot as mplot
 import numpy as np
 import calTransCurrent as cT
@@ -57,6 +58,8 @@ class zone():
             #axes[1,1].set_ylabel('E (meV)')
             axes[1,1].set_xlim((-0.0001, 0.025))
             mplot.suptitle('Band diagram @'+title)
+        if not os.path.exists('../figures/'):
+            os.mkdir('../figures/')
         mplot.savefig('../figures/Band_diagram_'+str(title)+'.png')
     def plotTR(self):
         for kx_idx, kx in enumerate(self.kx_sweep):
