@@ -1,0 +1,13 @@
+enable,region,cell_type,shift,width,length,Vtop,Vbot,gap
+o,lead,wave,0,40,1400,-0.03,-0.03,0.16
+o,lead,envelope,0,60,1400,0.03,-0.03,0.05
+o,lead,wave,0,40,1400,0.03,0.03,0.16
+o,output,wave,0,40,1400,0.03,0.03,0.16
+o,output,envelope,0,60,1400,-0.03,0.03,0.05
+o,output,wave,0,40,1400,-0.03,-0.03,0.16
+x,lead,envelope,0,5,1400,-0.03,-0.03,0.16
+x,lead,envelope,5,60,1400,0.03,-0.03,0.05
+x,lead,envelope,65,5,1400,0.03,0.03,0.16
+x,output,envelope,0,5,1400,0.03,0.03,0.16
+x,output,envelope,5,60,1400,0.03,-0.03,0.05
+x,output,envelope,65,5,1400,-0.03,-0.03,0.16
