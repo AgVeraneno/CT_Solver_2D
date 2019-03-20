@@ -1,9 +1,11 @@
 import os, csv, copy
+import numpy as np
 import lib_material
 
 
 def load_setup(setup_file, job_file):
-    setup = {'Material':False,
+    setup = {'CPU_threads':1,
+             'Material':False,
              'Lattice':False,
              'Direction':False,
              'H_type':False,
@@ -15,16 +17,12 @@ def load_setup(setup_file, job_file):
              'kx0':None,
              'kxn':None,
              'dkx':None,
-             'V1':0,
-             'V2':0}
-    job = {'region':-1,
-           'cell_type':1,
-           'shift':0,
-           'width':0,
+             'V2':None,
+             'V1':None}
+    job = {'gap':0,
            'length':0,
-           'Vtop':0,
-           'Vbot':0,
-           'gap':0}
+           'mesh':0,
+           'V':0}
     '''
     import setup
     '''
@@ -48,13 +46,27 @@ def load_setup(setup_file, job_file):
     '''
     with open(job_file,newline='') as csv_file:
         rows = csv.DictReader(csv_file)
-        job_list = []
+        job_list = {}
         for row in rows:
             if row['enable'] == 'o':
-                new_job = copy.deepcopy(job)
-                for key in job.keys():
-                    new_job[key] = row[key]
-                job_list.append(new_job)
+                if row['job'] in job_list:
+                    for key in job.keys():
+                        job_list[row['job']][key].append(row[key])
+                else:
+                    new_job = copy.deepcopy(job)
+                    for key in job.keys():
+                        new_job[key] = [row[key]]
+                    job_list[row['job']] = new_job
             else:
                 continue
     return setup, job_list
+def saveAsCSV(file_name, table):
+    with open(file_name, 'w', newline='') as csv_file:
+        csv_parser = csv.writer(csv_file, delimiter=',',quotechar='|')
+        for i in range(np.size(np.array(table), 0)):
+            try:
+                csv_parser.writerow(list(table[i,:]))
+            except:
+                csv_parser.writerow(table[i])
+def saveAsPlot(file_name, x, y):
+    pass
