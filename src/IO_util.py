@@ -69,10 +69,24 @@ def saveAsCSV(file_name, table):
                 csv_parser.writerow(list(table[i,:]))
             except:
                 csv_parser.writerow(table[i])
-def saveAsFigure(file_name, x, y, title=None, label=None, lim=None, band=False):
-    if band:
-        for x_idx in range(int(np.size(x,1)/2)):
-            pyplot.plot(np.real(np.array(x)[:,x_idx]),y)
+def saveAsFigure(file_name, x, y, title=None, label=None, lim=None, figure_type=None):
+    if figure_type == 'band':
+        f, axes = pyplot.subplots(2,1)
+        ## plot K valley
+        color = ['b','g','r','k']
+        for x_idx in range(int(np.size(x['+K'],1))):
+            axes[0].grid()
+            axes[0].set_title('ky(+K)')
+            if x_idx < 2:
+                axes[0].plot(np.real(np.array(x['+K'])[:,x_idx]),y, color[x_idx])
+                axes[0].plot(np.abs(np.imag(np.array(x['+K'])[:,x_idx])),y, color[x_idx])
+        ## plot K' valley
+        for x_idx in range(int(np.size(x['-K'],1))):
+            axes[1].grid()
+            axes[1].set_title('ky(-K)')
+            if x_idx < 2:
+                axes[1].plot(np.real(np.array(x['-K'])[:,x_idx]),y, color[x_idx])
+                axes[1].plot(np.abs(np.imag(np.array(x['-K'])[:,x_idx])),y, color[x_idx])
     else:
         pyplot.plot(x, y)
     if lim != None:
