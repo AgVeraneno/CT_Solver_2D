@@ -66,12 +66,29 @@ def BarrierSolver(input_list):
                 forward
                 '''
                 ky_list = zone_list[0].ky_list[v][E_idx]
-                i_state_f[v] = worker2.findIncidentState(ky_list)
+                i_state_f[v], isW = worker2.findIncidentState(ky_list)
                 vel = worker2.worker.calVelocity(zone_list[0], E_idx, kx_idx)
                 if i_state_f[v] == [0,0,0,0]:
                     worker2.T[v][kx_idx].append(None)
                     worker2.R[v][kx_idx].append(None)
                     worker2.vel[v][kx_idx].append(None)
+                elif isW:
+                    ## calculate transfer matrix
+                    worker2.calTranferMatrix(zone_list, kx, E_idx, v)
+                    ## calculate transmission
+                    i_state_f[v] = [0,1,0,0]
+                    worker2.calTransmission(i_state_f, E_idx, kx_idx, vel, v)
+                    tempT = copy.deepcopy(worker2.T[v][kx_idx][-1])
+                    tempR = copy.deepcopy(worker2.R[v][kx_idx][-1])
+                    worker2.T[v][kx_idx].pop(-1)
+                    worker2.R[v][kx_idx].pop(-1)
+                    ## calculate transfer matrix
+                    worker2.calTranferMatrix(zone_list, kx, E_idx, v)
+                    ## calculate transmission
+                    i_state_f[v] = [0,0,0,1]
+                    worker2.calTransmission(i_state_f, E_idx, kx_idx, vel, v)
+                    worker2.T[v][kx_idx][-1] += tempT
+                    worker2.R[v][kx_idx][-1] += tempR
                 else:
                     ## calculate transfer matrix
                     worker2.calTranferMatrix(zone_list, kx, E_idx, v)
@@ -81,12 +98,29 @@ def BarrierSolver(input_list):
                 backward
                 '''
                 ky_list = zone_list[-1].ky_list[v][E_idx]
-                i_state_r[v] = worker2.findIncidentState(ky_list)
+                i_state_r[v], isW = worker2.findIncidentState(ky_list)
                 vel_r = worker2.worker.calVelocity(zone_list[-1], E_idx, kx_idx)
                 if i_state_r[v] == [0,0,0,0]:
                     worker2.T_r[v][kx_idx].append(None)
                     worker2.R_r[v][kx_idx].append(None)
                     worker2.vel_r[v][kx_idx].append(None)
+                elif isW:
+                    ## calculate transfer matrix
+                    worker2.calTranferMatrix(zone_list, kx, E_idx, v, 'r')
+                    ## calculate transmission
+                    i_state_r[v] = [0,1,0,0]
+                    worker2.calTransmission(i_state_r, E_idx, kx_idx, vel, v, 'r')
+                    tempT = copy.deepcopy(worker2.T_r[v][kx_idx][-1])
+                    tempR = copy.deepcopy(worker2.R_r[v][kx_idx][-1])
+                    worker2.T_r[v][kx_idx].pop(-1)
+                    worker2.R_r[v][kx_idx].pop(-1)
+                    ## calculate transfer matrix
+                    worker2.calTranferMatrix(zone_list, kx, E_idx, v, 'r')
+                    ## calculate transmission
+                    i_state_r[v] = [0,0,0,1]
+                    worker2.calTransmission(i_state_r, E_idx, kx_idx, vel, v, 'r')
+                    worker2.T_r[v][kx_idx][-1] += tempT
+                    worker2.R_r[v][kx_idx][-1] += tempR
                 else:
                     ## calculate transfer matrix
                     worker2.calTranferMatrix(zone_list, kx, E_idx, v, 'r')
@@ -102,7 +136,7 @@ def BarrierSolver(input_list):
         Calculate polarization
         '''
         print('Calculating polarization')
-        
+        '''
         for E_idx, E in enumerate(input_list['E']):
             for v in ['+K', '-K']:
                 if v == '+K':
@@ -113,7 +147,7 @@ def BarrierSolver(input_list):
                 thisVel = worker2.vel[v][kx_idx][E_idx]
                 thisLambda = zone_list[0].eigVal_list[v][E_idx]
                 ky = zone_list[0].ky_list[v][E_idx]
-                i_state = worker2.findIncidentState(ky)
+                i_state, isW = worker2.findIncidentState(ky)
                 thisky = np.dot(ky, i_state)
                 if i_state != [0,0,0,0]:
                     # calculate Fermi distribution
@@ -151,6 +185,7 @@ def BarrierSolver(input_list):
                         Jr_tot_r[v][E_idx] += abs(f*thisVel*R)/grid_size
                 else:
                     worker2.f_r[v][kx_idx].append(None)
+        '''
         step_elapsed_time = time.time() - step_start_time
         print("\n1 step time:",step_elapsed_time, '(s)')
     worker2.JTf = Jt_tot_f
@@ -170,7 +205,7 @@ if __name__ == '__main__':
     kx1 = np.arange(-0.02, -0.00025, 1e-5)
     kx2 = np.arange(0.00025, 0.02, 1e-5)
     kx = np.append(kx1, kx2)
-    kx = [0.0035,0.0035]
+    kx = [0.0035]
     #kx = np.arange(0.001, 0.008, 0.001)
     input_list = {
         # Assign plotter flag

@@ -86,12 +86,14 @@ class CurrentSolver():
                     Jo_pre_r = np.dot(Jo_pre_r, Jo)
             self.Jo_r[v] = copy.deepcopy(Jo_pre_r)
     def findIncidentState(self, ky):
-        if np.imag(round(ky[3], 10)) == 0:
-            return [0,0,0,1]
+        if np.isclose(np.imag(ky[1]),0) and np.isclose(np.imag(ky[3]),0):
+            return [0,1,0,1], True
+        elif np.imag(round(ky[3], 10)) == 0:
+            return [0,0,0,1], False
         elif np.imag(round(ky[1], 10)) == 0:
-            return [0,1,0,0]
+            return [0,1,0,0], False
         else:
-            return [0,0,0,0]
+            return [0,0,0,0], False
     def calTransmission(self, i_state, E_idx, kx_idx, vel, v, mode='f'):
         t_state = [0,1,0,1]
         r_state = [1,0,1,0]
@@ -228,16 +230,16 @@ class CurrentSolver():
                     output.append(np.real(self.PR[kx_idx][E_idx]))
                     output.append(np.real(self.vel['+K'][kx_idx][E_idx]))
                     output.append(np.real(self.vel['-K'][kx_idx][E_idx]))
-                    output.append(np.real(self.f['+K'][kx_idx][E_idx]))
-                    output.append(np.real(self.f['-K'][kx_idx][E_idx]))
+                    #output.append(np.real(self.f['+K'][kx_idx][E_idx]))
+                    #output.append(np.real(self.f['-K'][kx_idx][E_idx]))
                     output.append(np.real(self.T_r['+K'][kx_idx][E_idx]))
                     output.append(np.real(self.T_r['-K'][kx_idx][E_idx]))
                     output.append(np.real(self.R_r['+K'][kx_idx][E_idx]))
                     output.append(np.real(self.R_r['-K'][kx_idx][E_idx]))
                     output.append(np.real(self.vel_r['+K'][kx_idx][E_idx]))
                     output.append(np.real(self.vel_r['-K'][kx_idx][E_idx]))
-                    output.append(np.real(self.f_r['+K'][kx_idx][E_idx]))
-                    output.append(np.real(self.f_r['-K'][kx_idx][E_idx]))
+                    #output.append(np.real(self.f_r['+K'][kx_idx][E_idx]))
+                    #output.append(np.real(self.f_r['-K'][kx_idx][E_idx]))
                     spamwriter.writerow(output)
         with open('../zone_state/PTR_'+filename+'.csv', 'w', newline='') as csvfile:
             spamwriter = csv.writer(csvfile, dialect='excel', delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
