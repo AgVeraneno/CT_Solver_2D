@@ -56,10 +56,16 @@ class TwoDCT():
             length = self.job_sweep[job_name]['length'][idx]
             V = self.job_sweep[job_name]['V'][idx]
             if self.H_type == 'linearized':
-                Hi, Hp = H_parser.linearized(gap, E, V, kx)
-                val, vec = np.linalg.eig(np.dot(np.linalg.inv(Hp), Hi))
-                val, vec = self.__sort__(val, vec)
-                val_list.append([E, val])
+                if self.m_type == 'Zigzag':
+                    Hi, Hp = H_parser.linearized(gap, E, V, kx)
+                    val, vec = np.linalg.eig(-np.dot(np.linalg.inv(Hp), Hi))
+                    val, vec = self.__sort__(val, vec)
+                    val_list.append([E, val])
+                elif self.m_type == 'Armchair':
+                    Hi, Hp = H_parser.linearized(gap, E, V, kx)
+                    val, vec = np.linalg.eig(-np.dot(np.linalg.inv(Hp), Hi))
+                    #val, vec = self.__sort__(val, vec)
+                    val_list.append([E, val])
         return val_list
     def __sort__(self, val, vec):
         if self.m_type == 'Zigzag':
