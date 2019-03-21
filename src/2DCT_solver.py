@@ -48,11 +48,12 @@ class TwoDCT():
         for zone in val_list[0]['zone']:
             file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
             eigVal = []
+            eigVec = []
             for idx in range(len(self.E_sweep)):
                 eigVal.append(val_list[idx]['val'][zone])
-                eigVec = val_list[idx]['vec'][0]
+                eigVec.append(val_list[idx]['vec'][0])
             else:
-                eigVal = self.__sort__(eigVal)
+                eigVal, eigVec = self.__sort__(eigVal, eigVec)
                 IO_util.saveAsFigure(file_name, eigVal, self.E_sweep, band=True)
         IO_util.saveAsCSV('band.csv', np.block(val_list))
     def __sweepE__(self, E):
@@ -81,17 +82,24 @@ class TwoDCT():
         return val_list
     def __sort__(self, val, vec):
         if self.H_type == 'linearized':
-            val_sorted = np.sort(val)
-            new_val = copy.deepcopy(val)
-            new_vec = copy.deepcopy(vec)
-            for v_idx, v in enumerate(val):
-                for v_idx2, v2 in enumerate(val_sorted):
-                    if v == v2:
-                        new_val[v_idx] = val[v_idx2]/self.setup['Material'].K_norm
-                        new_vec[v_idx,:] = vec[v_idx2,:]
-                        continue
-            else:
-                return new_val, new_vec
+            '''
+            sort first energy eigenstate
+            the pattern will be: R1, T1, R2, T2
+            '''
+            ## K valley
+            for idx in range(len(self.E_sweep)):
+                val_sorted = np.sort(val[idx][0:4])
+                
+                new_val = copy.deepcopy(val)
+                new_vec = copy.deepcopy(vec)
+                for v_idx, v in enumerate(val):
+                    for v_idx2, v2 in enumerate(val_sorted):
+                        if v == v2:
+                            new_val[v_idx] = val[v_idx2]/self.setup['Material'].K_norm
+                            new_vec[v_idx,:] = vec[v_idx2,:]
+                            continue
+                else:
+                    return new_val, new_vec
             
     
 if __name__ == '__main__':
