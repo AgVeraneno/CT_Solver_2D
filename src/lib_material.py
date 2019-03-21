@@ -68,34 +68,36 @@ class Hamiltonian():
         H1Kn = copy.deepcopy(empty_matrix)
         if self.m_type == 'Zigzag':
             # ky independent terms (K valley)
-            H0Kp[0,1] = self.mat.vF0*(1+kx)*self.mat.K_norm
-            H0Kp[0,3] = self.mat.vF3*(1+kx)*self.mat.K_norm
-            H0Kp[1,2] = self.mat.r1
-            H0Kp[2,3] = self.mat.vF0*(1+kx)*self.mat.K_norm
+            H0Kp[0,1] = self.mat.vF0*kx*self.mat.K_norm
+            H0Kp[0,3] = self.mat.r1
+            H0Kp[1,2] = self.mat.vF3*kx*self.mat.K_norm
+            H0Kp[2,3] = self.mat.vF0*kx*self.mat.K_norm
             H0Kp += np.transpose(np.conj(H0Kp))
             H0Kp[0,0] = gap+V-E
             H0Kp[1,1] = gap+V-E
             H0Kp[2,2] = -gap+V-E
             H0Kp[3,3] = -gap+V-E
             # ky independent terms (K- valley)
-            H0Kn[0,1] = -self.mat.vF0*(-1+kx)*self.mat.K_norm
-            H0Kn[0,3] = -self.mat.vF3*(-1+kx)*self.mat.K_norm
-            H0Kn[1,2] = self.mat.r1
-            H0Kn[2,3] = -self.mat.vF0*(-1+kx)*self.mat.K_norm
+            H0Kn[0,1] = -self.mat.vF0*kx*self.mat.K_norm
+            H0Kn[0,3] = self.mat.r1
+            H0Kn[1,2] = -self.mat.vF3*kx*self.mat.K_norm
+            H0Kn[2,3] = -self.mat.vF0*kx*self.mat.K_norm
             H0Kn += np.transpose(np.conj(H0Kn))
             H0Kn[0,0] = gap+V-E
             H0Kn[1,1] = gap+V-E
             H0Kn[2,2] = -gap+V-E
             H0Kn[3,3] = -gap+V-E
             # ky dependent terms (K valley)
-            H1Kp[0,1] = -1j*self.mat.vF0
-            H1Kp[0,3] = 1j*self.mat.vF3
-            H1Kp[2,3] = -1j*self.mat.vF0
+            H1Kp[0,1] = 1j*self.mat.vF0
+            H1Kp[0,3] = -3j*self.mat.r1*self.mat.acc
+            H1Kp[1,2] = 1j*self.mat.vF3
+            H1Kp[2,3] = 1j*self.mat.vF0
             H1Kp += np.transpose(np.conj(H1Kp))
             # ky dependent terms (K' valley)
-            H1Kn[0,1] = -1j*self.mat.vF0
-            H1Kn[0,3] = 1j*self.mat.vF3
-            H1Kn[2,3] = -1j*self.mat.vF0
+            H1Kn[0,1] = 1j*self.mat.vF0
+            H1Kn[0,3] = -3j*self.mat.r1*self.mat.acc
+            H1Kn[1,2] = 1j*self.mat.vF3
+            H1Kn[2,3] = 1j*self.mat.vF0
             H1Kn += np.transpose(np.conj(H1Kn))
             Hi = [[H0Kp, empty_matrix],
                   [empty_matrix, H0Kn]]

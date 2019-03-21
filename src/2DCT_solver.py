@@ -45,49 +45,50 @@ class TwoDCT():
         with Pool(int(setup['CPU_threads'])) as mp:
             val_list = mp.map(self.__sweepE__, self.E_sweep)
         ## plot band structure
+        for zone in val_list[0]['zone']:
+            file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
+            eigVal = []
+            for idx in range(len(self.E_sweep)):
+                eigVal.append(val_list[idx]['val'][zone])
+                eigVec = val_list[idx]['vec'][0]
+            else:
+                eigVal = self.__sort__(eigVal)
+                IO_util.saveAsFigure(file_name, eigVal, self.E_sweep, band=True)
         IO_util.saveAsCSV('band.csv', np.block(val_list))
     def __sweepE__(self, E):
         job_name = self.current_job
         kx = self.current_kx
-        val_list = []
+        val_list = {'E':E,'zone':[],'val':[], 'vec':[]}
         ## calculate complex band
         H_parser = lib_material.Hamiltonian(self.setup)
         for idx, gap in enumerate(self.job_sweep[job_name]['gap']):
+            val_list['zone'].append(idx)
             length = self.job_sweep[job_name]['length'][idx]
             V = self.job_sweep[job_name]['V'][idx]
             if self.H_type == 'linearized':
                 if self.m_type == 'Zigzag':
                     Hi, Hp = H_parser.linearized(gap, E, V, kx)
                     val, vec = np.linalg.eig(-np.dot(np.linalg.inv(Hp), Hi))
-                    val, vec = self.__sort__(val, vec)
-                    val_list.append([E, val])
+                    val_list['val'].append(val)
+                    if idx == 0:        # save incident states
+                        val_list['vec'].append(vec)
                 elif self.m_type == 'Armchair':
                     Hi, Hp = H_parser.linearized(gap, E, V, kx)
                     val, vec = np.linalg.eig(-np.dot(np.linalg.inv(Hp), Hi))
-                    #val, vec = self.__sort__(val, vec)
-                    val_list.append([E, val])
+                    val_list['val'].append(val)
+                    if idx == 0:        # save incident states
+                        val_list['vec'].append(vec)
         return val_list
     def __sort__(self, val, vec):
-        if self.m_type == 'Zigzag':
-            ## sort K valley
-            val_sorted = np.sort(val[0:4])
+        if self.H_type == 'linearized':
+            val_sorted = np.sort(val)
             new_val = copy.deepcopy(val)
             new_vec = copy.deepcopy(vec)
             for v_idx, v in enumerate(val):
                 for v_idx2, v2 in enumerate(val_sorted):
                     if v == v2:
-                        new_val[v_idx] = val[v_idx2]
+                        new_val[v_idx] = val[v_idx2]/self.setup['Material'].K_norm
                         new_vec[v_idx,:] = vec[v_idx2,:]
-                        continue
-            ## sort K' valley
-            val_sorted = np.sort(val[4:8])
-            new_val = copy.deepcopy(val)
-            new_vec = copy.deepcopy(vec)
-            for v_idx, v in enumerate(val):
-                for v_idx2, v2 in enumerate(val_sorted):
-                    if v == v2:
-                        new_val[v_idx] = val[v_idx2+4]
-                        new_vec[v_idx,:] = vec[v_idx2+4,:]
                         continue
             else:
                 return new_val, new_vec

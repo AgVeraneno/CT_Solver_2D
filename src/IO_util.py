@@ -1,5 +1,6 @@
 import os, csv, copy
 import numpy as np
+from matplotlib import pyplot
 import lib_material
 
 
@@ -68,5 +69,24 @@ def saveAsCSV(file_name, table):
                 csv_parser.writerow(list(table[i,:]))
             except:
                 csv_parser.writerow(table[i])
-def saveAsPlot(file_name, x, y):
-    pass
+def saveAsFigure(file_name, x, y, title=None, label=None, lim=None, band=False):
+    if band:
+        for x_idx in range(int(np.size(x,1)/2)):
+            pyplot.plot(np.real(np.array(x)[:,x_idx]),y)
+    else:
+        pyplot.plot(x, y)
+    if lim != None:
+        pyplot.xlim([lim[0],lim[1]])
+        pyplot.ylim([lim[2],lim[3]])
+    if label != None:
+        pyplot.xlabel(label[0])
+        pyplot.ylabel(label[1])
+    else:
+        pyplot.xlabel('x')
+        pyplot.ylabel('y')
+    if title != None:
+        pyplot.title(title)
+    else:
+        pyplot.title(title)
+    pyplot.savefig(file_name+'.png')
+    pyplot.close()
