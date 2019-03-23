@@ -87,6 +87,8 @@ def saveAsFigure(file_name, x, y, title=None, label=None, lim=None, figure_type=
             if x_idx < 2:
                 axes[1].plot(np.real(np.array(x['-K'])[:,x_idx]),y, color[x_idx])
                 axes[1].plot(np.abs(np.imag(np.array(x['-K'])[:,x_idx])),y, color[x_idx])
+    elif figure_type == 'TR':
+        pyplot.plot(x, y)
     else:
         pyplot.plot(x, y)
     if lim != None:

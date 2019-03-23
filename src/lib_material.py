@@ -146,3 +146,72 @@ class Hamiltonian():
             return Hi, Hp
         else:
             raise ValueError("Bad input:",self.m_type)
+    def TB_bulk(self, gap, E, V, kx, ky=0):
+        ## variables
+        E = E*1e-3*self.mat.q
+        V = V*1e-3*self.mat.q
+        gap = gap*1e-3*self.mat.q
+        ## matrix
+        empty_matrix = np.zeros((4,4),dtype=np.complex128)
+        H0Kp = copy.deepcopy(empty_matrix)
+        H0Kn = copy.deepcopy(empty_matrix)
+        if self.m_type == 'Zigzag':
+            kx_term = np.cos(kx*self.mat.acc*3**0.5/2)
+            ky_term = np.exp(1.5j*ky*self.mat.acc)
+            # ky independent terms (K valley)
+            H0Kp[0,1] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
+            H0Kp[0,3] = self.mat.r1*np.conj(ky_term**2)
+            H0Kp[1,2] = -self.mat.r3*(1+2*np.conj(ky_term)*kx_term)
+            H0Kp[2,3] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
+            H0Kp += np.transpose(np.conj(H0Kp))
+            H0Kp[0,0] = gap+V-E
+            H0Kp[1,1] = gap+V-E
+            H0Kp[2,2] = -gap+V-E
+            H0Kp[3,3] = -gap+V-E
+            # ky independent terms (K- valley)
+            H0Kn[0,1] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
+            H0Kn[0,3] = self.mat.r1*np.conj(ky_term**2)
+            H0Kn[1,2] = -self.mat.r3*(1+2*np.conj(ky_term)*kx_term)
+            H0Kn[2,3] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
+            H0Kn += np.transpose(np.conj(H0Kn))
+            H0Kn[0,0] = gap+V-E
+            H0Kn[1,1] = gap+V-E
+            H0Kn[2,2] = -gap+V-E
+            H0Kn[3,3] = -gap+V-E
+            Hi = [[H0Kp, empty_matrix],
+                  [empty_matrix, H0Kn]]
+            return np.block(Hi)
+    def TB_band(self, gap, E, V, kx, ky=0):
+        pass
+    def J_op(self, kx, ky1, ky2, isLocal=True):
+        if isLocal:
+            ky_from = np.conj(ky1)*self.mat.K_norm
+            ky_to = ky2*self.mat.K_norm
+        else:
+            ky_from = ky1*self.mat.K_norm
+            ky_to = ky2*self.mat.K_norm
+        ## matrix
+        empty_matrix = np.zeros((4,4),dtype=np.complex128)
+        H0Kp = copy.deepcopy(empty_matrix)
+        H0Kn = copy.deepcopy(empty_matrix)
+        if self.m_type == 'Zigzag':
+            ky_term = np.exp(-1.5j*ky_from*self.mat.acc)+np.exp(-1.5j*ky_to*self.mat.acc)
+            ky_term2 = np.exp(-3j*ky_from*self.mat.acc)+np.exp(-3j*ky_to*self.mat.acc)
+            # ky independent terms (K valley)
+            kxValley = (1+kx)*self.mat.K_norm
+            kx_term = np.cos(kxValley*self.mat.acc*3**0.5/2)
+            H0Kp[0,1] = -2*self.mat.r0*ky_term*kx_term
+            H0Kp[0,3] = 2*self.mat.r1*ky_term2
+            H0Kp[1,2] = -2*self.mat.r3*ky_term*kx_term
+            H0Kp[2,3] = -2*self.mat.r0*ky_term*kx_term
+            H0Kp += np.transpose(np.conj(H0Kp))
+            # ky independent terms (K- valley)
+            kxValley = (-1+kx)*self.mat.K_norm
+            H0Kn[0,1] = -2*self.mat.r0*ky_term*kx_term
+            H0Kn[0,3] = 2*self.mat.r1*ky_term2
+            H0Kn[1,2] = -2*self.mat.r3*ky_term*kx_term
+            H0Kn[2,3] = -2*self.mat.r0*ky_term*kx_term
+            H0Kn += np.transpose(np.conj(H0Kn))
+            Hi = [[H0Kp, empty_matrix],
+                  [empty_matrix, H0Kn]]
+        return np.block(Hi)

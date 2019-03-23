@@ -1,7 +1,7 @@
 import os, time, copy
 from multiprocessing import Pool
 import numpy as np
-import IO_util, lib_material, band_solver
+import IO_util, lib_material, band_solver, current_solver
 
 class TwoDCT():
     def __init__(self, setup, jobs):
@@ -38,13 +38,14 @@ class TwoDCT():
                     self.job_sweep[job_name]['length'].append(float(job['length'][idx])/int(mesh))
             V_list = [dV for i in range(len(self.job_sweep[job_name]['gap']))]
             self.job_sweep[job_name]['V'] = np.cumsum(V_list)
-    def calTransmission(self, kx, job_name):
-        self.current_job = job_name
-        self.current_kx = kx
+    def calBand(self, kx, job_name):
         band_parser = band_solver.band_structure(self.setup, kx, job_name)
-        band_parser.genBand(self.E_sweep, self.job_sweep)
+        return band_parser.genBand(self.E_sweep, self.job_sweep)
+    def calTransmission(self, job, kx, val, vec, vec_conj):
+        current_parser = current_solver.current(self.setup)
+        current_parser.calTransmission(kx, job, self.E_sweep, val, vec, vec_conj)
             
-    
+        
 if __name__ == '__main__':
     '''
     load input files
@@ -55,9 +56,13 @@ if __name__ == '__main__':
     solver = TwoDCT(setup, jobs)
     ## calculate jobs
     for job_name, job in solver.job_sweep.items():
-        '''
-        calculate transmission
-        '''
         for kx in solver.kx_sweep:
-            solver.calTransmission(kx, job_name)
-        
+            '''
+            calculate band structure
+            '''
+            eigVal, eigVec, eigVecConj = solver.calBand(kx, job_name)
+            '''
+            calculate transmission
+            '''
+            print("calculating transmission")
+            solver.calTransmission(job, kx, eigVal, eigVec, eigVecConj)
