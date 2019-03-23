@@ -27,6 +27,7 @@ class BandStructure():
                 self.zone_len.append(input_list['zone_len'][z_idx]/z_mesh)
                 self.zone_V.append(input_list['zone_V']['I']+(z_idx*z_mesh+m)*V_step)
         self.zone_count = len(self.zone_len)
+        self.linearize = False
         '''
         outputs
         '''
@@ -54,7 +55,7 @@ class BandStructure():
         if self.zone_type == 'zigzag':
             for v_idx, v in enumerate(['+K', '-K']):
                 for E_idx, E in enumerate(self.E_sweep):
-                    k = {'x': v_kx[v_idx]}
+                    k = {'x': v_kx[v_idx],'K':v, 'kx0':kx}
                     eigVal, eigVec = self.H.bandgap(gap, V, k, E)
                     v_ky = self.__eig2ky__(eigVal)
                     ## normalize eigenstate
@@ -100,4 +101,7 @@ class BandStructure():
         if self.zone_type == 'zigzag':
             a = np.real(eigVal)
             b = np.imag(eigVal)
-            return (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+            if not self.linearize:
+                return (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+            else:
+                return eigVal

@@ -69,7 +69,7 @@ def saveAsCSV(file_name, table):
                 csv_parser.writerow(list(table[i,:]))
             except:
                 csv_parser.writerow(table[i])
-def saveAsFigure(file_name, x, y, title=None, label=None, lim=None, figure_type=None):
+def saveAsFigure(file_name, x, y, figure_type=None):
     if figure_type == 'band':
         f, axes = pyplot.subplots(2,1)
         ## plot K valley
@@ -87,22 +87,25 @@ def saveAsFigure(file_name, x, y, title=None, label=None, lim=None, figure_type=
             if x_idx < 2:
                 axes[1].plot(np.real(np.array(x['-K'])[:,x_idx]),y, color[x_idx])
                 axes[1].plot(np.abs(np.imag(np.array(x['-K'])[:,x_idx])),y, color[x_idx])
-    elif figure_type == 'TR':
-        pyplot.plot(x, y)
+    elif figure_type == 'PTR':
+        f, (axes1, axes2) = pyplot.subplots(2, 1, sharey=True)
+        axes1.grid()
+        axes1.plot(x, y)
+        axes1.set_title('Transmission')
+        axes1.set_ylabel("T")
+        ## polarization
+        Py = copy.deepcopy(x)
+        for i in range(len(x)):
+            if y[i][0] + y[i][1] != 0:
+                Py[i] = (y[i][0] - y[i][1])/(y[i][0] + y[i][1])
+            else:
+                Py[i] = None
+        axes2.grid()
+        axes2.plot(x, Py)
+        axes2.set_title('Polarization')
+        axes2.set_xlabel('E (meV)')
+        axes2.set_ylabel("(TK-TK')/(TK+TK')")
     else:
         pyplot.plot(x, y)
-    if lim != None:
-        pyplot.xlim([lim[0],lim[1]])
-        pyplot.ylim([lim[2],lim[3]])
-    if label != None:
-        pyplot.xlabel(label[0])
-        pyplot.ylabel(label[1])
-    else:
-        pyplot.xlabel('x')
-        pyplot.ylabel('y')
-    if title != None:
-        pyplot.title(title)
-    else:
-        pyplot.title(title)
     pyplot.savefig(file_name+'.png')
     pyplot.close()

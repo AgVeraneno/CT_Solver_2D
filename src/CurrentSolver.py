@@ -47,6 +47,7 @@ class CurrentSolver():
         '''
         self.H = lH.Graphene()
         self.mat = lm.Graphene()
+        self.linearize = False
     def calTranferMatrix(self, zone_list, kx, E_idx, v, mode='f'):
         '''
         Calculate interface current matrix
@@ -145,7 +146,10 @@ class CurrentSolver():
     def __eig2ky__(self, eigVal):
         a = np.real(eigVal)
         b = np.imag(eigVal)
-        return (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+        if not self.linearize:
+            return (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+        else:
+            return eigVal
     def calFermiDirac(self, input_list, zone_V, zone_gap, kx, ky, l):
         ## inputs
         dkx = input_list['dk']['Amp']*np.cos(input_list['dk']['Ang']*np.pi/180)

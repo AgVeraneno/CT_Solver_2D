@@ -41,9 +41,9 @@ class TwoDCT():
     def calBand(self, kx, job_name):
         band_parser = band_solver.band_structure(self.setup, kx, job_name)
         return band_parser.genBand(self.E_sweep, self.job_sweep)
-    def calTransmission(self, job, kx, val, vec, vec_conj):
+    def calTransmission(self, job, job_name, kx, val, vec, vec_conj):
         current_parser = current_solver.current(self.setup)
-        current_parser.calTransmission(kx, job, self.E_sweep, val, vec, vec_conj)
+        return current_parser.calTransmission(kx, job, job_name, self.E_sweep, val, vec, vec_conj)
             
         
 if __name__ == '__main__':
@@ -53,16 +53,39 @@ if __name__ == '__main__':
     setup_file = '../input/setup_2DCT.csv'
     job_file = '../input/job_2DCT.csv'
     setup, jobs = IO_util.load_setup(setup_file, job_file)
+    '''
+    start solver
+    '''
     solver = TwoDCT(setup, jobs)
     ## calculate jobs
+    t0 = time.time()
     for job_name, job in solver.job_sweep.items():
         for kx in solver.kx_sweep:
             '''
             calculate band structure
             '''
-            eigVal, eigVec, eigVecConj = solver.calBand(kx, job_name)
+            t_start = time.time()
+            eigVal, eigVec, eigVecConj, zone_list = solver.calBand(kx, job_name)
+            print('Process: band diagram ->',time.time()-t_start, '(sec)')
             '''
             calculate transmission
             '''
-            print("calculating transmission")
-            solver.calTransmission(job, kx, eigVal, eigVec, eigVecConj)
+            t_start = time.time()
+            T_list = solver.calTransmission(job, job_name, kx, eigVal, eigVec, eigVecConj)
+            print('Process: transmission ->',time.time()-t_start, '(sec)')
+            '''
+            plot output
+            '''
+            job_dir = '../output/'+job_name+'/band/'
+            if not os.path.exists(job_dir):
+                os.mkdir(job_dir)
+            for zone in zone_list:
+                file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
+                IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
+            job_dir = '../output/'+job_name+'/PTR/'
+            if not os.path.exists(job_dir):
+                os.mkdir(job_dir)
+            file_name = job_name+'_kx='+str(kx)
+            IO_util.saveAsFigure(job_dir+file_name, solver.E_sweep, T_list, figure_type='PTR')
+            
+    print('Calculation complete. Total time ->',time.time()-t0, '(sec)')

@@ -17,7 +17,7 @@ class current():
         else:
             self.I0 = 3j*self.mat.q*self.mat.acc/(2*self.mat.h_bar)
         self.H_parser = lib_material.Hamiltonian(setup)
-    def calTransmission(self, kx, job, E_sweep, val, vec, vec_conj):
+    def calTransmission(self, kx, job, job_name, E_sweep, val, vec, vec_conj):
         self.currentJob = job
         self.currentkx = kx
         self.val = val
@@ -25,10 +25,7 @@ class current():
         self.vec_conj = vec_conj
         with Pool(int(self.setup['CPU_threads'])) as mp:
             T_list = mp.map(self.__sweepE__, range(len(E_sweep)))
-        job_dir = '../output/'+job_name+'/T&R/'
-        if not os.path.exists(job_dir):
-            os.mkdir(job_dir)
-        IO_util.saveAsFigure(job_dir+file_name, E_sweep, T_list, figure_type='TR')
+        return T_list
     def __sweepE__(self, E_idx):
         '''
         build transfer matrix
@@ -85,10 +82,10 @@ class current():
             if sum(i_state[4:8]) == 0:
                 TKn = 0
             elif isKnW:
-                TKn = self.calCurrent([0,1,0,0], Tmat[5:8,5:8], Jinc[5:8,5:8], JN[5:8])
-                TKn += self.calCurrent([0,0,0,1], Tmat[5:8,5:8], Jinc[5:8,5:8], JN[5:8])
+                TKn = self.calCurrent([0,1,0,0], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8])
+                TKn += self.calCurrent([0,0,0,1], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8])
             else:
-                TKn = self.calCurrent(i_state[5:8], Tmat[5:8,5:8], Jinc[5:8,5:8], JN[5:8])
+                TKn = self.calCurrent(i_state[4:8], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8])
         return TKp, TKn
     def genLocalCurrent(self, kx, val, vec, z_len):
         if self.m_type == 'Zigzag':

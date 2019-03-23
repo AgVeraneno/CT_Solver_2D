@@ -7,10 +7,14 @@ from numpy import linalg as LA
 class Graphene():
     def __init__(self):
         self.mat = obj_Graphene.Graphene()          # material parameters
+        self.linearize = False
     def __eig2ky__(self, eigVal):
         a = np.real(eigVal)
         b = np.imag(eigVal)
-        return (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+        if not self.linearize:
+            return (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+        else:
+            return eigVal
     def bulk(self, gap, V, k, l, E=0, isZigzag=True, isMLG=False):
         '''
         k is in form of {'x': x, 'y':y}
@@ -51,17 +55,20 @@ class Graphene():
             H0[3][3] = gap+V -E
         return H0
     def bandgap(self, gap, V, k, E, typ='zigzag'):
+        linearize = False
         '''
         k is in form of {'x': x, 'y':y}
         unit is |K|
         unit of E is meV
         '''
         kx = k['x']*self.mat.K_norm
+        kx0 = k['kx0']
+        Kv = k['K']
         E = E*1e-3*self.mat.q
         V = V*1e-3*self.mat.q
         gapA = -gap+V
         gapB = gap+V
-        if typ == 'zigzag':
+        if typ == 'zigzag' and not linearize:
             const_term = np.cos(kx*self.mat.acc*3**0.5/2)
             ## 4 by 4 matrix
             H0 = np.zeros((4,4), dtype=np.complex128)
@@ -137,8 +144,48 @@ class Graphene():
             newVec = np.zeros((4,4), dtype=np.complex128)
             newVec[0:2,:] = eigVec[0:2, :]
             newVec[2:4,:] = eigVec2[0:2, :]
-            
             return eigVal, newVec
+        elif typ == 'zigzag' and linearize:
+            empty_matrix = np.zeros((4,4),dtype=np.complex128)
+            Hi = copy.deepcopy(empty_matrix)
+            Hp = copy.deepcopy(empty_matrix)
+            # ky independent terms (K valley)
+            if Kv == '+K':
+                Hi[0,1] = self.mat.vF0*kx0*self.mat.K_norm
+                Hi[0,3] = self.mat.r1
+                Hi[1,2] = self.mat.vF3*kx0*self.mat.K_norm
+                Hi[2,3] = self.mat.vF0*kx0*self.mat.K_norm
+                Hi += np.transpose(np.conj(Hi))
+                Hi[0,0] = gap+V-E
+                Hi[1,1] = gap+V-E
+                Hi[2,2] = -gap+V-E
+                Hi[3,3] = -gap+V-E
+                # ky dependent terms (K valley)
+                Hp[0,1] = 1j*self.mat.vF0
+                Hp[0,3] = -3j*self.mat.r1*self.mat.acc
+                Hp[1,2] = 1j*self.mat.vF3
+                Hp[2,3] = 1j*self.mat.vF0
+                Hp += np.transpose(np.conj(Hp))
+            elif Kv == '-K':
+                # ky independent terms (K- valley)
+                Hi[0,1] = -self.mat.vF0*kx0*self.mat.K_norm
+                Hi[0,3] = self.mat.r1
+                Hi[1,2] = -self.mat.vF3*kx0*self.mat.K_norm
+                Hi[2,3] = -self.mat.vF0*kx0*self.mat.K_norm
+                Hi += np.transpose(np.conj(Hi))
+                Hi[0,0] = gap+V-E
+                Hi[1,1] = gap+V-E
+                Hi[2,2] = -gap+V-E
+                Hi[3,3] = -gap+V-E
+    
+                # ky dependent terms (K' valley)
+                Hp[0,1] = 1j*self.mat.vF0
+                Hp[0,3] = -3j*self.mat.r1*self.mat.acc
+                Hp[1,2] = 1j*self.mat.vF3
+                Hp[2,3] = 1j*self.mat.vF0
+                Hp += np.transpose(np.conj(Hp))
+            eigVal, eigVec = LA.eig(-np.dot(np.linalg.inv(Hp), Hi))
+            return eigVal, eigVec
     def current(self, k, typ='local', isZigzag=True):
         '''
         k is in form of {'x': x, 'y':y}

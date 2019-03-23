@@ -21,7 +21,8 @@ class Graphene():
         self.r0 = 2.8*self.q                  # J. A1-B1 hopping energy
         self.r1 = 0.39*self.q                 # J. A2-B1 hopping energy
         self.r3 = 0.315*self.q                # J. A1-B2 hopping energy
-        
+        self.vF0 = 1.5*self.r0*self.acc       # m/s. Fermi velocity for graphene
+        self.vF3 = 1.5*self.r3*self.acc       # m/s. Fermi velocity for graphene
     def effectiveMass(self, delta):
         # delta (J)
         return delta/self.vF**2

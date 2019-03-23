@@ -224,7 +224,7 @@ if __name__ == '__main__':
         'Ef': 1000,
         ## Assign zone parameters
         # Zone gap height (meV)
-        'zone_gap': [10,10,10,10,50,45,40,35,0,0,0,0],
+        'zone_gap': [10,10,10,10,40,35,30,25,0,0,0,0],
         # Zone length (nm)
         'zone_len': [2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5],
         # Assign voltage drop (mV)
