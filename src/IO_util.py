@@ -71,6 +71,7 @@ def saveAsCSV(file_name, table):
                 csv_parser.writerow(table[i])
 def saveAsFigure(file_name, x, y, figure_type=None):
     if figure_type == 'band':
+        pyplot.figure(1,figsize=(16,9))
         f, axes = pyplot.subplots(2,1)
         ## plot K valley
         color = ['b','g','r','k']
@@ -88,16 +89,18 @@ def saveAsFigure(file_name, x, y, figure_type=None):
                 axes[1].plot(np.real(np.array(x['-K'])[:,x_idx]),y, color[x_idx])
                 axes[1].plot(np.abs(np.imag(np.array(x['-K'])[:,x_idx])),y, color[x_idx])
     elif figure_type == 'PTR':
-        f, (axes1, axes2) = pyplot.subplots(2, 1, sharey=True)
+        pyplot.figure(1,figsize=(16,9))
+        f, (axes1, axes2) = pyplot.subplots(2, 1, sharex=True)
         axes1.grid()
         axes1.plot(x, y)
         axes1.set_title('Transmission')
         axes1.set_ylabel("T")
+        axes1.legend(["+K","-K"])
         ## polarization
         Py = copy.deepcopy(x)
         for i in range(len(x)):
             if y[i][0] + y[i][1] != 0:
-                Py[i] = (y[i][0] - y[i][1])/(y[i][0] + y[i][1])
+                Py[i] = np.real((y[i][0] - y[i][1])/(y[i][0] + y[i][1]))
             else:
                 Py[i] = None
         axes2.grid()
@@ -105,6 +108,11 @@ def saveAsFigure(file_name, x, y, figure_type=None):
         axes2.set_title('Polarization')
         axes2.set_xlabel('E (meV)')
         axes2.set_ylabel("(TK-TK')/(TK+TK')")
+        csv_array = np.zeros((len(x),4))
+        csv_array[:,0] = x
+        csv_array[:,1:3] = np.real(y)
+        csv_array[:,3] = Py
+        saveAsCSV(file_name+'.csv', csv_array)
     else:
         pyplot.plot(x, y)
     pyplot.savefig(file_name+'.png')
