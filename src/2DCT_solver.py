@@ -60,7 +60,10 @@ if __name__ == '__main__':
     ## calculate jobs
     t0 = time.time()
     for job_name, job in solver.job_sweep.items():
+        if not os.path.exists('../output/'+job_name):
+            os.mkdir('../output/'+job_name)
         for kx in solver.kx_sweep:
+            print('Current job:',job_name,'@ kx=',kx)
             '''
             calculate band structure
             '''
