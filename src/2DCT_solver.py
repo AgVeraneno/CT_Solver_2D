@@ -75,6 +75,19 @@ if __name__ == '__main__':
             eigVal, eigVec, eigVecConj, zone_list = solver.calBand(kx, job_name)
             print('Process: band diagram ->',time.time()-t_start, '(sec)')
             '''
+            job_dir = '../output/'+job_name+'/band/'
+            if not os.path.exists(job_dir):
+                os.mkdir(job_dir)
+            for zone in zone_list:
+                file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
+                #IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
+                csv_table = np.zeros((len(x),16))
+                csv_table[:,0] = sover.E_sweep
+                for i in range(1,5):
+                    csv_table[:,1] = sover.E_sweep
+                IO_util.saveAsCSV(job_dir+file_name+'.csv',)
+            '''
+            '''
             calculate transmission
             '''
             t_start = time.time()
@@ -83,16 +96,24 @@ if __name__ == '__main__':
             '''
             plot output
             '''
-            job_dir = '../output/'+job_name+'/band/'
-            if not os.path.exists(job_dir):
-                os.mkdir(job_dir)
-            for zone in zone_list:
-                file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
-                IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
+
             job_dir = '../output/'+job_name+'/PTR/'
             if not os.path.exists(job_dir):
                 os.mkdir(job_dir)
             file_name = job_name+'_kx='+str(kx)
-            IO_util.saveAsFigure(job_dir+file_name, solver.E_sweep, T_list, figure_type='PTR')
+            #IO_util.saveAsFigure(job_dir+file_name, solver.E_sweep, T_list, figure_type='PTR')
+            x = solver.E_sweep
+            y = T_list
+            csv_array = np.zeros((len(x),4))
+            csv_array[:,0] = x
+            csv_array[:,1:3] = np.real(y)
+            Py = copy.deepcopy(x)
+            for i in range(len(x)):
+                if y[i][0] + y[i][1] != 0:
+                    Py[i] = np.real((y[i][0] - y[i][1])/(y[i][0] + y[i][1]))
+                else:
+                    Py[i] = None
+            csv_array[:,3] = Py
+            saveAsCSV(file_name+'.csv', csv_array)
             
     print('Calculation complete. Total time ->',time.time()-t0, '(sec)')

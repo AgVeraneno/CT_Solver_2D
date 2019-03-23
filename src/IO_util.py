@@ -116,4 +116,4 @@ def saveAsFigure(file_name, x, y, figure_type=None):
     else:
         pyplot.plot(x, y)
     pyplot.savefig(file_name+'.png')
-    pyplot.close()
+    pyplot.close('all')
