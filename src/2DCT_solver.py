@@ -60,8 +60,12 @@ if __name__ == '__main__':
     ## calculate jobs
     t0 = time.time()
     for job_name, job in solver.job_sweep.items():
+        ## build directory
+        if not os.path.exists('../output/'):
+            os.mkdir('../output/')
         if not os.path.exists('../output/'+job_name):
             os.mkdir('../output/'+job_name)
+        ## start sweeping
         for kx in solver.kx_sweep:
             print('Current job:',job_name,'@ kx=',kx)
             '''
