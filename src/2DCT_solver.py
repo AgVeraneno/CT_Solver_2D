@@ -80,12 +80,12 @@ if __name__ == '__main__':
                 os.mkdir(job_dir)
             for zone in zone_list:
                 file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
-                #IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
-                csv_table = np.zeros((len(x),16))
-                csv_table[:,0] = sover.E_sweep
-                for i in range(1,5):
-                    csv_table[:,1] = sover.E_sweep
-                IO_util.saveAsCSV(job_dir+file_name+'.csv',)
+                IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
+                #csv_table = np.zeros((len(x),16))
+                #csv_table[:,0] = sover.E_sweep
+                #for i in range(1,5):
+                #    csv_table[:,1] = sover.E_sweep
+                #IO_util.saveAsCSV(job_dir+file_name+'.csv',)
             '''
             '''
             calculate transmission
