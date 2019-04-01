@@ -74,19 +74,22 @@ if __name__ == '__main__':
             t_start = time.time()
             eigVal, eigVec, eigVecConj, zone_list = solver.calBand(kx, job_name)
             print('Process: band diagram ->',time.time()-t_start, '(sec)')
-            '''
             job_dir = '../output/'+job_name+'/band/'
             if not os.path.exists(job_dir):
                 os.mkdir(job_dir)
             for zone in zone_list:
                 file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
-                IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
-                #csv_table = np.zeros((len(x),16))
-                #csv_table[:,0] = sover.E_sweep
-                #for i in range(1,5):
-                #    csv_table[:,1] = sover.E_sweep
-                #IO_util.saveAsCSV(job_dir+file_name+'.csv',)
-            '''
+                #IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
+                csv_table = np.zeros((len(solver.E_sweep),17))
+                csv_table[:,0] = solver.E_sweep
+                for i in range(4):
+                    val = np.array(eigVal[zone]['+K'])[:,i]
+                    csv_table[:,i+1] = np.real(val)
+                    csv_table[:,i+5] = np.imag(val)
+                    val = np.array(eigVal[zone]['-K'])[:,i]
+                    csv_table[:,i+9] = np.real(val)
+                    csv_table[:,i+13] = np.imag(val)
+                IO_util.saveAsCSV(job_dir+file_name+'.csv',csv_table)
             '''
             calculate transmission
             '''
