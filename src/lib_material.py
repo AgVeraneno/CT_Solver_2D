@@ -147,6 +147,28 @@ class Hamiltonian():
             return Hi, Hp
         else:
             raise ValueError("Bad input:",self.m_type)
+    def linearize_velocity(self):
+        ## matrix
+        empty_matrix = np.zeros((4,4),dtype=np.complex128)
+        H0Kp = copy.deepcopy(empty_matrix)
+        H0Kn = copy.deepcopy(empty_matrix)
+        if self.m_type == 'Zigzag':
+            # ky independent terms (K valley)
+            H0Kp[0,1] = -1j*self.mat.vF0
+            H0Kp[0,3] = -3j*self.mat.r1*self.mat.acc
+            H0Kp[1,2] = -1j*self.mat.vF3
+            H0Kp[2,3] = -1j*self.mat.vF0
+            H0Kp += np.transpose(np.conj(H0Kp))
+            # ky independent terms (K- valley)
+            H0Kn[0,1] = -1j*self.mat.vF0
+            H0Kn[0,3] = -3j*self.mat.r1*self.mat.acc
+            H0Kn[1,2] = -1j*self.mat.vF3
+            H0Kn[2,3] = -1j*self.mat.vF0
+            H0Kn += np.transpose(np.conj(H0Kn))
+            Hi = [[H0Kp, empty_matrix],
+                  [empty_matrix, H0Kn]]
+            Hi = np.block(Hi)
+            return Hi
     def TB_bulk(self, gap, E, V, kx, ky=0):
         ## variables
         E = E*1e-3*self.mat.q
