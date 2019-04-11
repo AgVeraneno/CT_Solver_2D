@@ -94,7 +94,10 @@ class current():
             for i in range(m_size):
                 ky = val[i]
                 psi = vec[:,i]
-                J = self.H_parser.J_op(kx, ky, ky, isLocal=True)
+                if self.H_type == 'Linearized':
+                    J = self.H_parser.linearize_velocity()
+                else:
+                    J = self.H_parser.J_op(kx, ky, ky, isLocal=True)
                 J_prob = np.vdot(psi, np.dot(J, psi))
                 if np.imag(ky-np.conj(ky)) >= 0:
                     phase = np.exp(1j*(ky-np.conj(ky))*self.mat.K_norm*z_len*1e-9)
@@ -115,14 +118,20 @@ class current():
                     ## incident state
                     ky2 = z1['val'][j]
                     psi2 = z1['vec'][:,j]
-                    J = self.H_parser.J_op(kx, ky1, ky2, isLocal=False)
+                    if self.H_type == 'Linearized':
+                        J = self.H_parser.linearize_velocity()
+                    else:
+                        J = self.H_parser.J_op(kx, ky1, ky2, isLocal=False)
                     J_prob = np.dot(psi1, np.dot(J, psi2))
                     phase = np.exp(1j*(ky2-ky1)*self.mat.K_norm*z_len*1e-9)
                     Ji[i,j] = self.I0*phase*J_prob
                     ## output state
                     ky2 = z2['val'][j]
                     psi2 = z2['vec'][:,j]
-                    J = self.H_parser.J_op(kx, ky1, ky2, isLocal=False)
+                    if self.H_type == 'Linearized':
+                        J = self.H_parser.linearize_velocity()
+                    else:
+                        J = self.H_parser.J_op(kx, ky1, ky2, isLocal=False)
                     J_prob = np.dot(psi1, np.dot(J, psi2))
                     phase = np.exp(1j*(ky2-ky1)*self.mat.K_norm*z_len*1e-9)
                     Jo[i,j] = self.I0*phase*J_prob
