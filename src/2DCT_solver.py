@@ -53,6 +53,9 @@ if __name__ == '__main__':
     setup_file = '../input/setup_2DCT.csv'
     job_file = '../input/job_2DCT.csv'
     setup, jobs = IO_util.load_setup(setup_file, job_file)
+    if not setup['isWarp']:
+        setup['Material'].r3 = 0
+        setup['Material'].vF3 = 0
     '''
     start solver
     '''

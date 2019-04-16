@@ -56,6 +56,7 @@ class Hamiltonian():
         self.mat = setup['Material']
         self.lattice = setup['Lattice']
         self.m_type = setup['Direction']
+        self.H_type = setup['H_type']
     def linearized(self, gap, E, V, kx, ky=0):
         ## variables
         E = E*1e-3*self.mat.q
@@ -304,11 +305,18 @@ class Hamiltonian():
         H0Kp = copy.deepcopy(empty_matrix)
         H0Kn = copy.deepcopy(empty_matrix)
         if self.m_type == 'Zigzag':
-            ky_term = np.exp(-1.5j*ky_from*self.mat.acc)+np.exp(-1.5j*ky_to*self.mat.acc)
-            ky_term2 = np.exp(-3j*ky_from*self.mat.acc)+np.exp(-3j*ky_to*self.mat.acc)
-            # ky independent terms (K valley)
-            kxValley = (1+kx)*self.mat.K_norm
-            kx_term = np.cos(kxValley*self.mat.acc*3**0.5/2)
+            if self.H_type == 'linearized':
+                ky_term = 1-1.5j*ky_from*self.mat.acc+1-1.5j*ky_to*self.mat.acc
+                ky_term2 = 1-3j*ky_from*self.mat.acc+1-3j*ky_to*self.mat.acc
+                # ky independent terms (K valley)
+                kxValley = (1+kx)*self.mat.K_norm
+                kx_term = -0.5-kxValley*self.mat.acc*3/4
+            else:
+                ky_term = np.exp(-1.5j*ky_from*self.mat.acc)+np.exp(-1.5j*ky_to*self.mat.acc)
+                ky_term2 = np.exp(-3j*ky_from*self.mat.acc)+np.exp(-3j*ky_to*self.mat.acc)
+                # ky independent terms (K valley)
+                kxValley = (1+kx)*self.mat.K_norm
+                kx_term = np.cos(kxValley*self.mat.acc*3**0.5/2)
             H0Kp[0,1] = -2*self.mat.r0*ky_term*kx_term
             H0Kp[0,3] = 2*self.mat.r1*ky_term2
             H0Kp[1,0] = 2*self.mat.r0*np.conj(ky_term)*kx_term
@@ -317,9 +325,14 @@ class Hamiltonian():
             H0Kp[2,3] = -2*self.mat.r0*ky_term*kx_term
             H0Kp[3,0] = -2*self.mat.r1*np.conj(ky_term2)
             H0Kp[3,2] = 2*self.mat.r0*np.conj(ky_term)*kx_term
-            # ky independent terms (K- valley)
-            kxValley = (-1+kx)*self.mat.K_norm
-            kx_term = np.cos(kxValley*self.mat.acc*3**0.5/2)
+            if self.H_type == 'linearized':
+                # ky independent terms (K- valley)
+                kxValley = (-1+kx)*self.mat.K_norm
+                kx_term = -0.5-kxValley*self.mat.acc*3/4
+            else:
+                # ky independent terms (K- valley)
+                kxValley = (-1+kx)*self.mat.K_norm
+                kx_term = np.cos(kxValley*self.mat.acc*3**0.5/2)
             H0Kn[0,1] = -2*self.mat.r0*ky_term*kx_term
             H0Kn[0,3] = 2*self.mat.r1*ky_term2
             H0Kn[1,0] = 2*self.mat.r0*np.conj(ky_term)*kx_term
