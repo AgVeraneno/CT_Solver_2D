@@ -1,2 +1,0 @@
-CPU_threads,Material,Lattice,Direction,H_type,Temp,Ef,E0,En,dE,kx0,kxn,dkx,V1,V2,isWarp
-4,Graphene,BLG,Zigzag,Linearized,0,1000,0,30,0.1,0.0035,0.0035,0,0,0,0
