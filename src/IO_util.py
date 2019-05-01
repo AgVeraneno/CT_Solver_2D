@@ -20,11 +20,11 @@ def load_setup(setup_file, job_file):
              'dkx':None,
              'V2':None,
              'V1':None,
-             'isWarp':False}
+             'isWarp':False,
+             'isLeadInclude':False}
     job = {'gap':0,
            'length':0,
-           'mesh':0,
-           'V':0}
+           'mesh':0}
     '''
     import setup
     '''

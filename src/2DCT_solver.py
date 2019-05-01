@@ -31,12 +31,22 @@ class TwoDCT():
         for job_name, job in jobs.items():
             self.job_sweep[job_name] = {'gap':[], 'length':[], 'V':[]}
             mesh = [float(m) for m in job['mesh']]
-            dV = V/(sum(mesh)+1)
             for idx, mesh in enumerate(job['mesh']):
                 for i in range(int(mesh)):
                     self.job_sweep[job_name]['gap'].append(float(job['gap'][idx]))
                     self.job_sweep[job_name]['length'].append(float(job['length'][idx])/int(mesh))
-            V_list = [dV for i in range(len(self.job_sweep[job_name]['gap']))]
+            if setup['isLeadInclude']:
+                job_mesh = copy.deepcopy(job['mesh'])
+                i_lead = int(job_mesh.pop(0))
+                Vi = [0 for i in range(i_lead)]
+                o_lead = int(job_mesh.pop(-1))
+                Vo = [0 for i in range(o_lead)]
+                dV = [V/(sum([float(j) for j in job_mesh])+1) for i in range(len(self.job_sweep[job_name]['gap'])-i_lead-o_lead)]
+                Vi.extend(dV)
+                Vi.extend(Vo)
+                V_list = Vi
+            else:
+                V_list = [V/(sum(mesh)+1) for i in range(len(self.job_sweep[job_name]['gap']))]
             self.job_sweep[job_name]['V'] = np.cumsum(V_list)
     def calBand(self, kx, job_name):
         band_parser = band_solver.band_structure(self.setup, kx, job_name)
@@ -63,11 +73,12 @@ if __name__ == '__main__':
     ## calculate jobs
     t0 = time.time()
     for job_name, job in solver.job_sweep.items():
+        dir_name = job_name+'V='+str(float(setup['V2'])-float(setup['V1']))
         ## build directory
         if not os.path.exists('../output/'):
             os.mkdir('../output/')
-        if not os.path.exists('../output/'+job_name):
-            os.mkdir('../output/'+job_name)
+        if not os.path.exists('../output/'+dir_name):
+            os.mkdir('../output/'+dir_name)
         ## start sweeping
         for kx in solver.kx_sweep:
             print('Current job:',job_name,'@ kx=',kx)
@@ -77,7 +88,7 @@ if __name__ == '__main__':
             t_start = time.time()
             eigVal, eigVec, eigVecConj, zone_list = solver.calBand(kx, job_name)
             print('Process: band diagram ->',time.time()-t_start, '(sec)')
-            job_dir = '../output/'+job_name+'/band/'
+            job_dir = '../output/'+dir_name+'/band/'
             if not os.path.exists(job_dir):
                 os.mkdir(job_dir)
             for zone in zone_list:
@@ -103,7 +114,7 @@ if __name__ == '__main__':
             plot output
             '''
 
-            job_dir = '../output/'+job_name+'/PTR/'
+            job_dir = '../output/'+dir_name+'/PTR/'
             if not os.path.exists(job_dir):
                 os.mkdir(job_dir)
             file_name = job_name+'_kx='+str(kx)
