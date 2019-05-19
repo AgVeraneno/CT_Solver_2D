@@ -51,42 +51,36 @@ class current():
             val = np.block([self.val[z_idx]['+K'][E_idx], self.val[z_idx]['-K'][E_idx]])
             vec = np.block([self.vec[z_idx]['+K'][E_idx][:,:], self.vec[z_idx]['-K'][E_idx][:,:]])
             vec_conj = np.block([self.vec_conj[z_idx]['+K'][E_idx][:,:], self.vec_conj[z_idx]['-K'][E_idx][:,:]])
-            z1 = {'val':val,
-                  'vec':vec,
-                  'vec_conj':vec_conj}
+            z1 = {'val':copy.deepcopy(val),
+                  'vec':copy.deepcopy(vec),
+                  'vec_conj':copy.deepcopy(vec_conj)}
             val = np.block([self.val[z_idx+1]['+K'][E_idx], self.val[z_idx+1]['-K'][E_idx]])
             vec = np.block([self.vec[z_idx+1]['+K'][E_idx][:,:], self.vec[z_idx+1]['-K'][E_idx][:,:]])
             vec_conj = np.block([self.vec_conj[z_idx+1]['+K'][E_idx][:,:], self.vec_conj[z_idx+1]['-K'][E_idx][:,:]])
-            z2 = {'val':val,
-                  'vec':vec,
-                  'vec_conj':vec_conj}
+            z2 = {'val':copy.deepcopy(val),
+                  'vec':copy.deepcopy(vec),
+                  'vec_conj':copy.deepcopy(vec_conj)}
             Ji, Jo = self.genInterCurrent(kx, z1, z2, z_len)
             if z_idx == 0:
                 Jinc = copy.deepcopy(Ji)
                 Tmat = Jo
             else:
-                Tmat = np.matmul(Tmat, Jo)
+                Tmat = np.dot(Tmat, Jo)
         '''
         calculate transmission and reflection
         '''
         if self.m_type == 'Zigzag':
             # K valley transmission
             if sum(i_state[0:4]) == 0:
-                TKp = 0
-            elif isKpW:
-                TKp = self.calCurrent([0,1,0,0], Tmat[0:4,0:4], Jinc[0:4,0:4], JN[0:4])
-                TKp += self.calCurrent([0,0,0,1], Tmat[0:4,0:4], Jinc[0:4,0:4], JN[0:4])
+                TKp = RKp = 0
             else:
-                TKp = self.calCurrent(i_state[0:4], Tmat[0:4,0:4], Jinc[0:4,0:4], JN[0:4])
+                TKp, RKp = self.calCurrent(i_state[0:4], Tmat[0:4,0:4], Jinc[0:4,0:4], JN[0:4], J0[0:4])
             # K' valley transmission
             if sum(i_state[4:8]) == 0:
-                TKn = 0
-            elif isKnW:
-                TKn = self.calCurrent([0,1,0,0], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8])
-                TKn += self.calCurrent([0,0,0,1], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8])
+                TKn = RKn = 0
             else:
-                TKn = self.calCurrent(i_state[4:8], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8])
-        return TKp, TKn
+                TKn, RKn = self.calCurrent(i_state[4:8], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8], J0[4:8])
+        return TKp, TKn, RKp, RKn
     def genLocalCurrent(self, kx, val, vec, z_len):
         if self.m_type == 'Zigzag':
             m_size = len(val)
@@ -133,7 +127,7 @@ class current():
         val_im = np.imag(val)
         i_state = np.zeros(len(val))
         for i, v in enumerate(val_im):
-            if np.isclose(v, 0) and i%2 == 1:   # record tranmission states
+            if np.isclose(v, 0) and i%2 == 1:   # record transmission states
                 i_state[i] = 1
         else:
             if sum(i_state[0:4]) == 2:
@@ -145,8 +139,9 @@ class current():
             else:
                 WKn = False
             return i_state, WKp, WKn
-    def calCurrent(self, i_state, T, Jinc, JT):
+    def calCurrent(self, i_state, T, Jinc, JT, JR):
         t_state = [0,1]*int(len(i_state)/2)
+        r_state = [1,0]*int(len(i_state)/2)
         '''
         calculate interface coefficient
         '''
@@ -156,11 +151,30 @@ class current():
                     T[i][j] = -1
                 else:
                     T[i][j] = T[i][j]*t_state[j]
-        c_vec = np.linalg.solve(T, i_state)
-        c_abs = [np.conj(c)*c for c in c_vec]
-        '''
-        calculate current
-        '''
-        Ji = np.dot(i_state, np.dot(Jinc, i_state))
-        Jt = sum([t*c_abs[i]*np.abs(np.real(JT[i]/Ji)) for i, t in enumerate(t_state)])
-        return Jt
+        if sum(i_state) == 2:
+            Jt = 0
+            Jr = 0
+            Ji = 0
+            for i in [1, 3]:
+                i_state = [0,0,0,0]
+                i_state[i] = 1
+                c_vec = np.linalg.solve(T, i_state)
+                c_abs = [np.conj(c)*c for c in c_vec]
+                '''
+                calculate current
+                '''
+                Ji += np.abs(np.real(np.dot(i_state, np.dot(Jinc, i_state))))
+                Jt += sum([t*c_abs[i]*np.abs(np.real(JT[i])) for i, t in enumerate(t_state)])
+                Jr += sum([r*c_abs[i]*np.abs(np.real(JR[i])) for i, r in enumerate(r_state)])
+            else:
+                return Jt/Ji, Jr/Ji
+        else:
+            c_vec = np.linalg.solve(T, i_state)
+            c_abs = [np.conj(c)*c for c in c_vec]
+            '''
+            calculate current
+            '''
+            Ji = np.dot(i_state, np.dot(Jinc, i_state))
+            Jt = sum([t*c_abs[i]*np.abs(np.real(JT[i]/Ji)) for i, t in enumerate(t_state)])
+            Jr = sum([r*c_abs[i]*np.abs(np.real(JR[i]/Ji)) for i, r in enumerate(r_state)])
+            return Jt, Jr

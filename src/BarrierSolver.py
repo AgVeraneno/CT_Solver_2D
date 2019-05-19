@@ -215,7 +215,7 @@ if __name__ == '__main__':
         # Assign interface type (armchair or zigzag)
         'type': 'zigzag',
         # Sweep energy (meV). E=(startE,stopE,stepE). stepE <= 0.04 meV (current converge)
-        'E': np.arange(0, 50, 0.1),
+        'E': np.arange(10, 100, 0.1),
         # Sweep kx (|K|). kx=(startkx,stopkx,pts). pts >= 5000 (current converge)
         'kx': kx,
         # Assign Fermi-Dirac shift (Amp:|K|; Ang:degree)
@@ -224,9 +224,9 @@ if __name__ == '__main__':
         'Ef': 1000,
         ## Assign zone parameters
         # Zone gap height (meV)
-        'zone_gap': [10,10,10,10,40,35,30,25,0,0,0,0],
+        'zone_gap': [10,60,10],
         # Zone length (nm)
-        'zone_len': [2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5,2.5],
+        'zone_len': [10,10,10],
         # Assign voltage drop (mV)
         'zone_V': {'I':0,'O':0},
         # Assign mesh in each zone

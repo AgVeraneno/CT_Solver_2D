@@ -30,11 +30,11 @@ class TwoDCT():
         self.job_sweep = {}
         for job_name, job in jobs.items():
             self.job_sweep[job_name] = {'gap':[], 'length':[], 'V':[]}
-            mesh = [float(m) for m in job['mesh']]
-            for idx, mesh in enumerate(job['mesh']):
-                for i in range(int(mesh)):
+            mesh = [int(m) for m in job['mesh']]
+            for idx, m in enumerate(mesh):
+                for i in range(int(m)):
                     self.job_sweep[job_name]['gap'].append(float(job['gap'][idx]))
-                    self.job_sweep[job_name]['length'].append(float(job['length'][idx])/int(mesh))
+                    self.job_sweep[job_name]['length'].append(float(job['length'][idx])/int(m))
             if setup['isLeadInclude']:
                 job_mesh = copy.deepcopy(job['mesh'])
                 i_lead = int(job_mesh.pop(0))
@@ -121,16 +121,16 @@ if __name__ == '__main__':
             #IO_util.saveAsFigure(job_dir+file_name, solver.E_sweep, T_list, figure_type='PTR')
             x = solver.E_sweep
             y = T_list
-            csv_array = np.zeros((len(x),4))
+            csv_array = np.zeros((len(x),6))
             csv_array[:,0] = x
-            csv_array[:,1:3] = np.real(y)
+            csv_array[:,1:5] = np.real(y)
             Py = copy.deepcopy(x)
             for i in range(len(x)):
                 if y[i][0] + y[i][1] != 0:
                     Py[i] = np.real((y[i][0] - y[i][1])/(y[i][0] + y[i][1]))
                 else:
                     Py[i] = None
-            csv_array[:,3] = Py
+            csv_array[:,5] = Py
             IO_util.saveAsCSV(job_dir+file_name+'.csv', csv_array)
             
     print('Calculation complete. Total time ->',time.time()-t0, '(sec)')

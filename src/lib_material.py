@@ -307,24 +307,28 @@ class Hamiltonian():
         if self.m_type == 'Zigzag':
             if self.H_type == 'linearized':
                 ky_term = 1-1.5j*ky_from*self.mat.acc+1-1.5j*ky_to*self.mat.acc
+                ky_term_c = np.conj(ky_term)
                 ky_term2 = 1-3j*ky_from*self.mat.acc+1-3j*ky_to*self.mat.acc
+                ky_term2_c = np.conj(ky_term2)
                 # ky independent terms (K valley)
                 kxValley = (1+kx)*self.mat.K_norm
                 kx_term = -0.5-kxValley*self.mat.acc*3/4
             else:
                 ky_term = np.exp(-1.5j*ky_from*self.mat.acc)+np.exp(-1.5j*ky_to*self.mat.acc)
+                ky_term_c = np.exp(1.5j*ky_from*self.mat.acc)+np.exp(1.5j*ky_to*self.mat.acc)
                 ky_term2 = np.exp(-3j*ky_from*self.mat.acc)+np.exp(-3j*ky_to*self.mat.acc)
+                ky_term2_c = np.exp(3j*ky_from*self.mat.acc)+np.exp(3j*ky_to*self.mat.acc)
                 # ky independent terms (K valley)
                 kxValley = (1+kx)*self.mat.K_norm
                 kx_term = np.cos(kxValley*self.mat.acc*3**0.5/2)
             H0Kp[0,1] = -2*self.mat.r0*ky_term*kx_term
             H0Kp[0,3] = 2*self.mat.r1*ky_term2
-            H0Kp[1,0] = 2*self.mat.r0*np.conj(ky_term)*kx_term
+            H0Kp[1,0] = 2*self.mat.r0*ky_term_c*kx_term
             H0Kp[1,2] = -2*self.mat.r3*ky_term*kx_term
-            H0Kp[2,1] = 2*self.mat.r3*np.conj(ky_term)*kx_term
+            H0Kp[2,1] = 2*self.mat.r3*ky_term_c*kx_term
             H0Kp[2,3] = -2*self.mat.r0*ky_term*kx_term
-            H0Kp[3,0] = -2*self.mat.r1*np.conj(ky_term2)
-            H0Kp[3,2] = 2*self.mat.r0*np.conj(ky_term)*kx_term
+            H0Kp[3,0] = -2*self.mat.r1*ky_term2_c
+            H0Kp[3,2] = 2*self.mat.r0*ky_term_c*kx_term
             if self.H_type == 'linearized':
                 # ky independent terms (K- valley)
                 kxValley = (-1+kx)*self.mat.K_norm
@@ -335,12 +339,12 @@ class Hamiltonian():
                 kx_term = np.cos(kxValley*self.mat.acc*3**0.5/2)
             H0Kn[0,1] = -2*self.mat.r0*ky_term*kx_term
             H0Kn[0,3] = 2*self.mat.r1*ky_term2
-            H0Kn[1,0] = 2*self.mat.r0*np.conj(ky_term)*kx_term
+            H0Kn[1,0] = 2*self.mat.r0*ky_term_c*kx_term
             H0Kn[1,2] = -2*self.mat.r3*ky_term*kx_term
-            H0Kn[2,1] = 2*self.mat.r3*np.conj(ky_term)*kx_term
+            H0Kn[2,1] = 2*self.mat.r3*ky_term_c*kx_term
             H0Kn[2,3] = -2*self.mat.r0*ky_term*kx_term
-            H0Kn[3,0] = -2*self.mat.r1*np.conj(ky_term2)
-            H0Kn[3,2] = 2*self.mat.r0*np.conj(ky_term)*kx_term
+            H0Kn[3,0] = -2*self.mat.r1*ky_term2_c
+            H0Kn[3,2] = 2*self.mat.r0*ky_term_c*kx_term
             Hi = [[H0Kp, empty_matrix],
                   [empty_matrix, H0Kn]]
         return np.block(Hi)
