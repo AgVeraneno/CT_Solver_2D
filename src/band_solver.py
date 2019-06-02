@@ -97,7 +97,8 @@ class band_structure():
         Ef = self.setup['Ef']
         dkx = self.dkx
         dky = float(self.setup['dk_amp'])*np.sin(float(self.setup['dk_ang'])*np.pi/180)
-        H = H_parser.FZ_bulk(gap, E, V, kx+dkx, ky+dky)
+        H = H_parser.FZ_bulk(gap, E, V, kx-dkx, ky-dky)
+        
     def __sort__(self, val, vec):
         if self.H_type == 'LN':
             '''
