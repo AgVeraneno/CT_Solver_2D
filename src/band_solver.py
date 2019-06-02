@@ -4,10 +4,10 @@ import numpy as np
 import IO_util, lib_material
 
 class band_structure():
-    def __init__(self, setup, kx, job_name):
+    def __init__(self, setup, job_name):
         self.setup = setup
         self.current_job = job_name
-        self.current_kx = kx
+        self.dkx = float(setup['dk_amp'])*np.cos(float(setup['dk_ang'])*np.pi/180)
         self.lattice = setup['Lattice']
         self.m_type = setup['Direction']
         self.H_type = setup['H_type']
@@ -17,34 +17,37 @@ class band_structure():
         self.E_sweep = E_sweep
         self.job_sweep = job_sweep
         job_name = self.current_job
-        kx = self.current_kx
+        kx = self.dkx
         with Pool(int(self.setup['CPU_threads'])) as mp:
             val_list = mp.map(self.__sweepE__, E_sweep)
         ## plot band structure
         eigVal = []
         eigVec = []
         eigVecConj = []
+        vel = []
         for zone in val_list[0]['zone']:
             eigVal.append([])
             eigVec.append([])
             eigVecConj.append([])
+            vel.append([])
             for idx in range(len(self.E_sweep)):
                 eigVal[zone].append(val_list[idx]['val'][zone])
                 eigVec[zone].append(val_list[idx]['vec'][zone])
+                vel[zone].append(val_list[idx]['vel'][zone])
             else:
                 eigVal[zone], eigVec[zone], eigVecConj[zone] = self.__sort__(eigVal[zone], eigVec[zone])
-        return eigVal, eigVec, eigVecConj, val_list[0]['zone']
+        return eigVal, eigVec, eigVecConj, val_list[0]['zone'], vel
     def __sweepE__(self, E):
         job_name = self.current_job
-        kx = self.current_kx
-        val_list = {'E':E,'zone':[],'val':[], 'vec':[]}
+        kx = self.dkx
+        val_list = {'E':E,'zone':[],'val':[], 'vec':[], 'vel':[], 'fermi':[]}
         ## calculate complex band
         H_parser = lib_material.Hamiltonian(self.setup)
         for idx, gap in enumerate(self.job_sweep[job_name]['gap']):
             val_list['zone'].append(idx)
             length = self.job_sweep[job_name]['length'][idx]
             V = self.job_sweep[job_name]['V'][idx]
-            if self.H_type == 'Linearized':
+            if self.H_type == 'LN':
                 if self.m_type == 'Zigzag':
                     Hi, Hp = H_parser.linearized(gap, E, V, kx)
                     val, vec = np.linalg.eig(-np.dot(np.linalg.inv(Hp), Hi))
@@ -55,22 +58,48 @@ class band_structure():
                     val, vec = np.linalg.eig(-np.dot(np.linalg.inv(Hp), Hi))
                     val_list['val'].append(val)
                     val_list['vec'].append(vec)
-            elif self.H_type == 'TB':
+                ## velocity
+                for i, ky in enumerate(val):
+                    H = H_parser.LN_velocity()
+                    psi = vec[:,i]
+                    psi_c = np.conj(vec[:,i])
+                    vel = np.dot(psi_c, np.dot(H, psi))
+                    val_list['vel'].append(vel)
+            elif self.H_type == 'FZ':
                 if self.m_type == 'Zigzag':
-                    # K valley
-                    Kp_val, Kp_vec = H_parser.TB_band(gap, E, V, 1+kx)
-                    Kn_val, Kn_vec = H_parser.TB_band(gap, E, V, -1+kx)
+                    ## eigenstates
+                    Kp_val, Kp_vec = H_parser.FZ_band(gap, E, V, 1+kx)
+                    Kn_val, Kn_vec = H_parser.FZ_band(gap, E, V, -1+kx)
                     empty_matrix = np.zeros((4,4),dtype=np.complex128)
                     val = np.block([Kp_val, Kn_val])
                     vec = np.block([[Kp_vec, empty_matrix],
                                     [empty_matrix, Kn_vec]])
                     val_list['val'].append(val)
                     val_list['vec'].append(vec)
+                    ## velocity
+                    for i, ky in enumerate(val):
+                        H = H_parser.FZ_velocity(kx, ky)
+                        psi = vec[:,i]
+                        psi_c = np.conj(vec[:,i])
+                        vel = np.dot(psi_c, np.dot(H, psi))
+                        val_list['vel'].append(vel)
             else:
-                raise ValueError('Please give either Linearized or TB')
+                raise ValueError('Please give either LN or FZ')
+            if idx == 0:
+                f = np.zeros(len(val))
+                for ky_idx, ky in enumerate(val):
+                    f[ky_idx] = self.getFermiDist(H_parser, gap, E, V, kx, ky)
+                else:
+                    val_list['fermi'].append(f)
         return val_list
+    def getFermiDist(self, H_parser, gap, E, V, kx, ky):
+        T = self.setup['Temp']
+        Ef = self.setup['Ef']
+        dkx = self.dkx
+        dky = float(self.setup['dk_amp'])*np.sin(float(self.setup['dk_ang'])*np.pi/180)
+        H = H_parser.FZ_bulk(gap, E, V, kx+dkx, ky+dky)
     def __sort__(self, val, vec):
-        if self.H_type == 'Linearized':
+        if self.H_type == 'LN':
             '''
             sort first energy eigenstate
             the pattern will be: R1, T1, R2, T2
@@ -97,7 +126,7 @@ class band_structure():
                 vec_list['-K'].append(new_vec)
                 vec_conj_list['-K'].append(new_vec_conj)
             return val_list, vec_list, vec_conj_list
-        elif self.H_type == 'TB':
+        elif self.H_type == 'FZ':
             '''
             sort first energy eigenstate
             the pattern will be: R1, T1, R2, T2

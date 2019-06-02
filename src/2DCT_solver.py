@@ -48,14 +48,14 @@ class TwoDCT():
             else:
                 V_list = [V/(sum(mesh)+1) for i in range(len(self.job_sweep[job_name]['gap']))]
             self.job_sweep[job_name]['V'] = np.cumsum(V_list)
-    def calBand(self, kx, job_name):
-        band_parser = band_solver.band_structure(self.setup, kx, job_name)
+    def calBand(self, job_name):
+        band_parser = band_solver.band_structure(self.setup, job_name)
         return band_parser.genBand(self.E_sweep, self.job_sweep)
-    def calTransmission(self, job, job_name, kx, val, vec, vec_conj):
+    def calTransmission(self, job, kx, val, vec, vec_conj):
         current_parser = current_solver.current(self.setup)
-        return current_parser.calTransmission(kx, job, job_name, self.E_sweep, val, vec, vec_conj)
-            
-        
+        return current_parser.calTransmission(kx, job, self.E_sweep, val, vec, vec_conj)
+    def calTotalCurrent(self):
+        pass
 if __name__ == '__main__':
     '''
     load input files
@@ -79,58 +79,60 @@ if __name__ == '__main__':
             os.mkdir('../output/')
         if not os.path.exists('../output/'+dir_name):
             os.mkdir('../output/'+dir_name)
-        ## start sweeping
-        for kx in solver.kx_sweep:
-            print('Current job:',job_name,'@ kx=',kx)
-            '''
-            calculate band structure
-            '''
-            t_start = time.time()
-            eigVal, eigVec, eigVecConj, zone_list = solver.calBand(kx, job_name)
-            print('Process: band diagram ->',time.time()-t_start, '(sec)')
-            job_dir = '../output/'+dir_name+'/band/'
-            if not os.path.exists(job_dir):
-                os.mkdir(job_dir)
-            for zone in zone_list:
-                file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
-                #IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
-                csv_table = np.zeros((len(solver.E_sweep),17))
-                csv_table[:,0] = solver.E_sweep
-                for i in range(4):
-                    val = np.array(eigVal[zone]['+K'])[:,i]
-                    csv_table[:,i+1] = np.real(val)
-                    csv_table[:,i+5] = np.imag(val)
-                    val = np.array(eigVal[zone]['-K'])[:,i]
-                    csv_table[:,i+9] = np.real(val)
-                    csv_table[:,i+13] = np.imag(val)
-                IO_util.saveAsCSV(job_dir+file_name+'.csv',csv_table)
-            '''
-            calculate transmission
-            '''
-            t_start = time.time()
-            T_list = solver.calTransmission(job, job_name, kx, eigVal, eigVec, eigVecConj)
-            print('Process: transmission ->',time.time()-t_start, '(sec)')
-            '''
-            plot output
-            '''
-
-            job_dir = '../output/'+dir_name+'/PTR/'
-            if not os.path.exists(job_dir):
-                os.mkdir(job_dir)
-            file_name = job_name+'_kx='+str(kx)
-            #IO_util.saveAsFigure(job_dir+file_name, solver.E_sweep, T_list, figure_type='PTR')
-            x = solver.E_sweep
-            y = T_list
-            csv_array = np.zeros((len(x),6))
-            csv_array[:,0] = x
-            csv_array[:,1:5] = np.real(y)
-            Py = copy.deepcopy(x)
-            for i in range(len(x)):
-                if y[i][0] + y[i][1] != 0:
-                    Py[i] = np.real((y[i][0] - y[i][1])/(y[i][0] + y[i][1]))
-                else:
-                    Py[i] = None
-            csv_array[:,5] = Py
-            IO_util.saveAsCSV(job_dir+file_name+'.csv', csv_array)
-            
+        '''
+        calculate band structure
+        '''
+        kx = float(setup['dk_amp'])*np.cos(float(setup['dk_ang'])*np.pi/180)
+        print('Current job:',job_name, '@kx=',kx)
+        t_start = time.time()
+        eigVal, eigVec, eigVecConj, zone_list, vel = solver.calBand(job_name)
+        print('Process: band diagram ->',time.time()-t_start, '(sec)')
+        job_dir = '../output/'+dir_name+'/band/'
+        if not os.path.exists(job_dir):
+            os.mkdir(job_dir)
+        for zone in zone_list:
+            file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
+            #IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
+            csv_table = np.zeros((len(solver.E_sweep),17))
+            csv_table[:,0] = solver.E_sweep
+            for i in range(4):
+                val = np.array(eigVal[zone]['+K'])[:,i]
+                csv_table[:,i+1] = np.real(val)
+                csv_table[:,i+5] = np.imag(val)
+                val = np.array(eigVal[zone]['-K'])[:,i]
+                csv_table[:,i+9] = np.real(val)
+                csv_table[:,i+13] = np.imag(val)
+            IO_util.saveAsCSV(job_dir+file_name+'.csv',csv_table)
+        '''
+        calculate transmission coefficient
+        '''
+        t_start = time.time()
+        T_list = solver.calTransmission(job, kx, eigVal, eigVec, eigVecConj)
+        print('Process: transmission ->',time.time()-t_start, '(sec)')
+        '''
+        plot output
+        '''
+        job_dir = '../output/'+dir_name+'/PTR/'
+        if not os.path.exists(job_dir):
+            os.mkdir(job_dir)
+        file_name = job_name+'_kx='+str(kx)
+        #IO_util.saveAsFigure(job_dir+file_name, solver.E_sweep, T_list, figure_type='PTR')
+        x = solver.E_sweep
+        y = T_list
+        csv_array = np.zeros((len(x),6))
+        csv_array[:,0] = x
+        csv_array[:,1:5] = np.real(y)
+        Py = copy.deepcopy(x)
+        for i in range(len(x)):
+            if y[i][0] + y[i][1] != 0:
+                Py[i] = np.real((y[i][0] - y[i][1])/(y[i][0] + y[i][1]))
+            else:
+                Py[i] = None
+        csv_array[:,5] = Py
+        IO_util.saveAsCSV(job_dir+file_name+'.csv', csv_array)
+        '''
+        calculate total current transmission
+        '''
+        t_start = time.time()
+        #J_list = solver.calTotalCurrent(job, kx, eigVal, eigVec, eigVecConj)
     print('Calculation complete. Total time ->',time.time()-t0, '(sec)')

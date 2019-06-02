@@ -148,7 +148,7 @@ class Hamiltonian():
             return Hi, Hp
         else:
             raise ValueError("Bad input:",self.m_type)
-    def linearize_velocity(self):
+    def LN_velocity(self):
         ## matrix
         empty_matrix = np.zeros((4,4),dtype=np.complex128)
         H0Kp = copy.deepcopy(empty_matrix)
@@ -170,7 +170,7 @@ class Hamiltonian():
                   [empty_matrix, H0Kn]]
             Hi = np.block(Hi)
             return Hi
-    def TB_bulk(self, gap, E, V, kx, ky=0):
+    def FZ_bulk(self, gap, E, V, kx, ky=0):
         ## variables
         E = E*1e-3*self.mat.q
         V = V*1e-3*self.mat.q
@@ -205,7 +205,7 @@ class Hamiltonian():
             Hi = [[H0Kp, empty_matrix],
                   [empty_matrix, H0Kn]]
             return np.block(Hi)
-    def TB_band(self, gap, E, V, kx, ky=0):
+    def FZ_band(self, gap, E, V, kx, ky=0):
         ## variables
         E = E*1e-3*self.mat.q
         V = V*1e-3*self.mat.q
@@ -293,6 +293,36 @@ class Hamiltonian():
             b = np.imag(eigVal)
             ky = (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
             return ky, newVec
+    def FZ_velocity(self, kx, ky):
+        kx = (1+kx)*self.mat.K_norm
+        ky = ky*self.mat.K_norm
+        v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
+        v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
+        ## K valley
+        H0Kp = np.zeros((4,4), dtype=np.complex128)
+        H0Kp[0][1] = -2*self.mat.r0*v1
+        H0Kp[0][3] = self.mat.r1*v2
+        H0Kp[1][0] = -2*self.mat.r0*np.conj(v1)
+        H0Kp[1][2] = -2*self.mat.r3*v1
+        H0Kp[2][1] = -2*self.mat.r3*np.conj(v1)
+        H0Kp[2][3] = -2*self.mat.r0*v1
+        H0Kp[3][0] = self.mat.r1*np.conj(v2)
+        H0Kp[3][2] = -2*self.mat.r0*np.conj(v1)
+        ## K' valley
+        kx = (-1+kx)*self.mat.K_norm
+        v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
+        H0Kn = np.zeros((4,4), dtype=np.complex128)
+        H0Kn[0][1] = -2*self.mat.r0*v1
+        H0Kn[0][3] = self.mat.r1*v2
+        H0Kn[1][0] = -2*self.mat.r0*np.conj(v1)
+        H0Kn[1][2] = -2*self.mat.r3*v1
+        H0Kn[2][1] = -2*self.mat.r3*np.conj(v1)
+        H0Kn[2][3] = -2*self.mat.r0*v1
+        H0Kn[3][0] = self.mat.r1*np.conj(v2)
+        H0Kn[3][2] = -2*self.mat.r0*np.conj(v1)
+        H0 = np.block([[H0Kp, np.zeros((4,4), dtype=np.complex128)],
+                       [np.zeros((4,4), dtype=np.complex128), H0Kn]])
+        return H0
     def J_op(self, kx, ky1, ky2, isLocal=True):
         if isLocal:
             ky_from = np.conj(ky1)*self.mat.K_norm
@@ -305,7 +335,7 @@ class Hamiltonian():
         H0Kp = copy.deepcopy(empty_matrix)
         H0Kn = copy.deepcopy(empty_matrix)
         if self.m_type == 'Zigzag':
-            if self.H_type == 'linearized':
+            if self.H_type == 'LN':
                 ky_term = 1-1.5j*ky_from*self.mat.acc+1-1.5j*ky_to*self.mat.acc
                 ky_term_c = np.conj(ky_term)
                 ky_term2 = 1-3j*ky_from*self.mat.acc+1-3j*ky_to*self.mat.acc
@@ -329,7 +359,7 @@ class Hamiltonian():
             H0Kp[2,3] = -2*self.mat.r0*ky_term*kx_term
             H0Kp[3,0] = -2*self.mat.r1*ky_term2_c
             H0Kp[3,2] = 2*self.mat.r0*ky_term_c*kx_term
-            if self.H_type == 'linearized':
+            if self.H_type == 'LN':
                 # ky independent terms (K- valley)
                 kxValley = (-1+kx)*self.mat.K_norm
                 kx_term = -0.5-kxValley*self.mat.acc*3/4

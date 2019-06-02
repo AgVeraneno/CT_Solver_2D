@@ -21,7 +21,9 @@ def load_setup(setup_file, job_file):
              'V2':None,
              'V1':None,
              'isWarp':False,
-             'isLeadInclude':False}
+             'isLeadInclude':False,
+             'dk_amp':None,
+             'dk_ang':None}
     job = {'gap':0,
            'length':0,
            'mesh':0}

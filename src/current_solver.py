@@ -17,7 +17,7 @@ class current():
         else:
             self.I0 = 3j*self.mat.q*self.mat.acc/(2*self.mat.h_bar)
         self.H_parser = lib_material.Hamiltonian(setup)
-    def calTransmission(self, kx, job, job_name, E_sweep, val, vec, vec_conj):
+    def calTransmission(self, kx, job, E_sweep, val, vec, vec_conj):
         self.currentJob = job
         self.currentkx = kx
         self.val = val
@@ -80,6 +80,12 @@ class current():
                 TKn = RKn = 0
             else:
                 TKn, RKn = self.calCurrent(i_state[4:8], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8], J0[4:8])
+        '''
+        calculate total current
+        '''
+        val = np.block([self.val[0]['+K'][E_idx], self.val[0]['-K'][E_idx]])
+        kx_list = [1+kx,1+kx,1+kx,1+kx,-1+kx,-1+kx,-1+kx,-1+kx]
+        
         return TKp, TKn, RKp, RKn
     def genLocalCurrent(self, kx, val, vec, z_len):
         if self.m_type == 'Zigzag':
@@ -155,7 +161,7 @@ class current():
             Jt = 0
             Jr = 0
             Ji = 0
-            for i in [1, 3]:
+            for i in [3]:
                 i_state = [0,0,0,0]
                 i_state[i] = 1
                 c_vec = np.linalg.solve(T, i_state)
