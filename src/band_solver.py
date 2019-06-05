@@ -6,6 +6,7 @@ import IO_util, lib_material
 class band_structure():
     def __init__(self, setup, job_name):
         self.setup = setup
+        self.mat = setup['Material']
         self.current_job = job_name
         self.dkx = float(setup['dk_amp'])*np.cos(float(setup['dk_ang'])*np.pi/180)
         self.lattice = setup['Lattice']
@@ -85,20 +86,8 @@ class band_structure():
                         val_list['vel'].append(vel)
             else:
                 raise ValueError('Please give either LN or FZ')
-            if idx == 0:
-                f = np.zeros(len(val))
-                for ky_idx, ky in enumerate(val):
-                    f[ky_idx] = self.getFermiDist(H_parser, gap, E, V, kx, ky)
-                else:
-                    val_list['fermi'].append(f)
         return val_list
-    def getFermiDist(self, H_parser, gap, E, V, kx, ky):
-        T = self.setup['Temp']
-        Ef = self.setup['Ef']
-        dkx = self.dkx
-        dky = float(self.setup['dk_amp'])*np.sin(float(self.setup['dk_ang'])*np.pi/180)
-        H = H_parser.FZ_bulk(gap, E, V, kx-dkx, ky-dky)
-        
+
     def __sort__(self, val, vec):
         if self.H_type == 'LN':
             '''

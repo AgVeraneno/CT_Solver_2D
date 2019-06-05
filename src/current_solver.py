@@ -26,6 +26,42 @@ class current():
         with Pool(int(self.setup['CPU_threads'])) as mp:
             T_list = mp.map(self.__sweepE__, range(len(E_sweep)))
         return T_list
+    def calTotalCurrent(self, E_sweep, kx_list, T_list, val, vel, job):
+        self.gap = job['gap']
+        self.V = job['V']
+        self.val = val
+        self.vel = vel
+        self.T = T_list
+        self.kx_sweep = kx_list
+        self.E_sweep = E_sweep
+        with Pool(int(self.setup['CPU_threads'])) as mp:
+            J_list = mp.map(self.__sweepE_current__, range(len(E_sweep)))
+        JKp = J_list[0]
+        JKn = J_list[1]
+        P = (JKp-JKn)/(JKp+JKn)
+        return JKp, JKn, P
+    def __sweepE_current__(self, E_idx):
+        val = np.block([self.val[0]['+K'][E_idx], self.val[0]['-K'][E_idx]])
+        vel = np.block([self.vel[0][E_idx], self.vel[0][E_idx]])
+        T = [self.T[E_idx][0], self.T[E_idx][1]]
+        # get incident states
+        i_state, isKpW, isKnW = self.getIncidentState(val)
+        for kx in self.kx_sweep:
+            if isKpW:
+                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
+                Jtp += abs(f*vel[3]*T[0])
+            else:
+                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
+                Jtp += abs(f*vel[3]*T[0])
+            if isKnW:
+                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
+                Jtn += abs(f*vel[3]*T[1])
+            else:
+                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
+                Jtn += abs(f*vel[3]*T[1])
+        else:
+            return Jtp, Jtn
+        
     def __sweepE__(self, E_idx):
         '''
         build transfer matrix
@@ -145,6 +181,23 @@ class current():
             else:
                 WKn = False
             return i_state, WKp, WKn
+    def getFermiDist(self, gap, E, V, kx, ky):
+        T = float(self.setup['Temp'])
+        Ef = float(self.setup['Ef'])
+        dkx = float(self.setup['dk_amp'])*np.cos(float(self.setup['dk_ang'])*np.pi/180)
+        dky = float(self.setup['dk_amp'])*np.sin(float(self.setup['dk_ang'])*np.pi/180)
+        H = self.H_parser.FZ_bulk(gap, E, V, kx-dkx, ky-dky)
+        E, _ = np.linalg.eig(H)
+        sorted_E = sorted(E)
+        thisE = sorted_E[2]
+        if T > 10:
+            f = 1/(1+np.exp((thisE-(Ef+V)*1e-3*self.mat.q)/(self.mat.kB*self.Temp)))
+        else:
+            if thisE <= (Ef+V)*1e-3*self.mat.q:
+                f = 1
+            else:
+                f = 0
+        return f
     def calCurrent(self, i_state, T, Jinc, JT, JR):
         t_state = [0,1]*int(len(i_state)/2)
         r_state = [1,0]*int(len(i_state)/2)

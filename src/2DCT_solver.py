@@ -11,6 +11,7 @@ class TwoDCT():
         self.lattice = setup['Lattice']
         self.m_type = setup['Direction']
         self.H_type = setup['H_type']
+        self.dkx = float(setup['dk_amp'])*np.cos(float(setup['dk_ang'])*np.pi/180)
     def __mesh__(self, setup, jobs):
         ## construct mesh
         # sweep parameters
@@ -54,8 +55,9 @@ class TwoDCT():
     def calTransmission(self, job, kx, val, vec, vec_conj):
         current_parser = current_solver.current(self.setup)
         return current_parser.calTransmission(kx, job, self.E_sweep, val, vec, vec_conj)
-    def calTotalCurrent(self):
-        pass
+    def calTotalCurrent(self, T_list, val, vel, job_name):
+        current_parser = current_solver.current(self.setup)
+        return current_parser.calTotalCurrent(self.E_sweep, self.kx_sweep, T_list, val, vel, self.job_sweep[job_name])
 if __name__ == '__main__':
     '''
     load input files
@@ -134,5 +136,7 @@ if __name__ == '__main__':
         calculate total current transmission
         '''
         t_start = time.time()
-        #J_list = solver.calTotalCurrent(job, kx, eigVal, eigVec, eigVecConj)
+        JKp, JKn, P = solver.calTotalCurrent(T_list, eigVal, vel, job_name)
+        file_name = job_name+'_Total'
+        IO_util.saveAsCSV(job_dir+file_name+'.csv', [['K',"K'","PT"],[JKp, JKn, P]])
     print('Calculation complete. Total time ->',time.time()-t0, '(sec)')
