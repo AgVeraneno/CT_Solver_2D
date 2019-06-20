@@ -162,6 +162,8 @@ class CurrentSolver():
             if f == ky:
                 lamb = l[ff]
                 break
+            else:
+                lamb = l[-1]
         E, vec = LA.eig(self.H.bulk(zone_gap, zone_V, k, lamb))
         ## find real E
         sorted_E = sorted(E)

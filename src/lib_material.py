@@ -293,9 +293,9 @@ class Hamiltonian():
             b = np.imag(eigVal)
             ky = (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
             return ky, newVec
-    def FZ_velocity(self, kx, ky):
+    def FZ_velocity(self, kx, ky_dict):
         kx = (1+kx)*self.mat.K_norm
-        ky = ky*self.mat.K_norm
+        ky = ky_dict['+K']*self.mat.K_norm
         v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
         v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
         ## K valley
@@ -310,7 +310,9 @@ class Hamiltonian():
         H0Kp[3][2] = -2*self.mat.r0*np.conj(v1)
         ## K' valley
         kx = (-1+kx)*self.mat.K_norm
+        ky = ky_dict['-K']*self.mat.K_norm
         v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
+        v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
         H0Kn = np.zeros((4,4), dtype=np.complex128)
         H0Kn[0][1] = -2*self.mat.r0*v1
         H0Kn[0][3] = self.mat.r1*v2

@@ -1,10 +1,10 @@
 import os, time, copy
 from multiprocessing import Pool
 import numpy as np
-import IO_util, lib_material
+import IO_util, lib_material, band_solver
 
 class current():
-    def __init__(self, setup):
+    def __init__(self, setup, job_name):
         self.setup = setup
         self.mat = setup['Material']
         self.lattice = setup['Lattice']
@@ -17,48 +17,60 @@ class current():
         else:
             self.I0 = 3j*self.mat.q*self.mat.acc/(2*self.mat.h_bar)
         self.H_parser = lib_material.Hamiltonian(setup)
-    def calTransmission(self, kx, job, E_sweep, val, vec, vec_conj):
+        self.band_parser = band_solver.band_structure(setup, job_name)
+    def calTransmission(self, kx, job, E_sweep, val, vec, vec_conj, isSingleThread=False):
         self.currentJob = job
         self.currentkx = kx
         self.val = val
         self.vec = vec
         self.vec_conj = vec_conj
-        with Pool(int(self.setup['CPU_threads'])) as mp:
-            T_list = mp.map(self.__sweepE__, range(len(E_sweep)))
+        if isSingleThread:
+            for E_idx in range(len(E_sweep)):
+                T_list = self.__sweepE__(E_idx)
+        else:
+            with Pool(int(self.setup['CPU_threads'])) as mp:
+                T_list = mp.map(self.__sweepE__, range(len(E_sweep)))
         return T_list
-    def calTotalCurrent(self, E_sweep, kx_list, T_list, val, vel, job):
-        self.gap = job['gap']
-        self.V = job['V']
-        self.val = val
-        self.vel = vel
-        self.T = T_list
+    def calTotalCurrent(self, E_sweep, kx_list, T_list, val, vel, job, job_sweep):
+        self.job_sweep = job_sweep
+        self.job = job
+        self.gap = job['gap'][0]
+        self.V = job['V'][0]
         self.kx_sweep = kx_list
         self.E_sweep = E_sweep
         with Pool(int(self.setup['CPU_threads'])) as mp:
             J_list = mp.map(self.__sweepE_current__, range(len(E_sweep)))
-        JKp = J_list[0]
-        JKn = J_list[1]
-        P = (JKp-JKn)/(JKp+JKn)
-        return JKp, JKn, P
+        JKp = np.array(J_list)[:,0]
+        JKn = np.array(J_list)[:,1]
+        P = (sum(JKp)-sum(JKn))/(sum(JKp)+sum(JKn))
+        return sum(JKp), sum(JKn), P
     def __sweepE_current__(self, E_idx):
-        val = np.block([self.val[0]['+K'][E_idx], self.val[0]['-K'][E_idx]])
-        vel = np.block([self.vel[0][E_idx], self.vel[0][E_idx]])
-        T = [self.T[E_idx][0], self.T[E_idx][1]]
         # get incident states
-        i_state, isKpW, isKnW = self.getIncidentState(val)
+        Jtp = 0
+        Jtn = 0
         for kx in self.kx_sweep:
+            E = self.E_sweep[E_idx]
+            ## calculate band
+            val, vec, vec_conj, zone_list, vel = self.band_parser.genBand([E],self.job_sweep, isSingleThread=True)
+            i_state, isKpW, isKnW = self.getIncidentState(val)
+            ## calculate transmission
+            T = self.calTransmission(kx, self.job, [E], val, vec, vec_conj, isSingleThread=True)
+            Kp_vel = abs(vel['+K'][0][3])
+            Kn_vel = abs(vel['-K'][0][3])
+            KpT = T[0]
+            KnT = T[1]
             if isKpW:
-                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
-                Jtp += abs(f*vel[3]*T[0])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['+K'][0][3])
+                Jtp += abs(f*Kp_vel*KpT)
             else:
-                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
-                Jtp += abs(f*vel[3]*T[0])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['+K'][0][3])
+                Jtp += abs(f*Kp_vel*KpT)
             if isKnW:
-                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
-                Jtn += abs(f*vel[3]*T[1])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['-K'][0][3])
+                Jtn += abs(f*Kn_vel*KnT)
             else:
-                f = self.getFermiDist(self.gap, self.E_sweep[E_idx], self.V, kx, val[3])
-                Jtn += abs(f*vel[3]*T[1])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['-K'][0][3])
+                Jtn += abs(f*Kn_vel*KnT)
         else:
             return Jtp, Jtn
         
@@ -116,12 +128,6 @@ class current():
                 TKn = RKn = 0
             else:
                 TKn, RKn = self.calCurrent(i_state[4:8], Tmat[4:8,4:8], Jinc[4:8,4:8], JN[4:8], J0[4:8])
-        '''
-        calculate total current
-        '''
-        val = np.block([self.val[0]['+K'][E_idx], self.val[0]['-K'][E_idx]])
-        kx_list = [1+kx,1+kx,1+kx,1+kx,-1+kx,-1+kx,-1+kx,-1+kx]
-        
         return TKp, TKn, RKp, RKn
     def genLocalCurrent(self, kx, val, vec, z_len):
         if self.m_type == 'Zigzag':

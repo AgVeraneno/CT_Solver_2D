@@ -52,12 +52,12 @@ class TwoDCT():
     def calBand(self, job_name):
         band_parser = band_solver.band_structure(self.setup, job_name)
         return band_parser.genBand(self.E_sweep, self.job_sweep)
-    def calTransmission(self, job, kx, val, vec, vec_conj):
-        current_parser = current_solver.current(self.setup)
+    def calTransmission(self, job, kx, val, vec, vec_conj, job_name):
+        current_parser = current_solver.current(self.setup, job_name)
         return current_parser.calTransmission(kx, job, self.E_sweep, val, vec, vec_conj)
     def calTotalCurrent(self, T_list, val, vel, job_name):
-        current_parser = current_solver.current(self.setup)
-        return current_parser.calTotalCurrent(self.E_sweep, self.kx_sweep, T_list, val, vel, self.job_sweep[job_name])
+        current_parser = current_solver.current(self.setup, job_name)
+        return current_parser.calTotalCurrent(self.E_sweep, self.kx_sweep, T_list, val, vel, self.job_sweep[job_name], self.job_sweep)
 if __name__ == '__main__':
     '''
     load input files
@@ -95,21 +95,27 @@ if __name__ == '__main__':
         for zone in zone_list:
             file_name = job_name+'_kx='+str(kx)+'_z'+str(zone)
             #IO_util.saveAsFigure(job_dir+file_name, eigVal[zone], solver.E_sweep, figure_type='band')
-            csv_table = np.zeros((len(solver.E_sweep),17))
-            csv_table[:,0] = solver.E_sweep
+            csv_table = np.zeros((len(solver.E_sweep)+1,25), dtype=object)
+            csv_table[0,:] = ['E',"KR1","KR2","KR3","KR4","KI1","KI2","KI3","KI4",
+                              "K'R1","K'R2","K'R3","K'R4","K'I1","K'I2","K'I3","K'I4",
+                              "K1vel", "K2vel", "K3vel", "K4vel", "K'1vel", "K'2vel", "K'3vel", "K'4vel"]
+            csv_table[1:,0] = solver.E_sweep
             for i in range(4):
                 val = np.array(eigVal[zone]['+K'])[:,i]
-                csv_table[:,i+1] = np.real(val)
-                csv_table[:,i+5] = np.imag(val)
+                csv_table[1:,i+1] = np.real(val)
+                csv_table[1:,i+5] = np.imag(val)
                 val = np.array(eigVal[zone]['-K'])[:,i]
-                csv_table[:,i+9] = np.real(val)
-                csv_table[:,i+13] = np.imag(val)
+                csv_table[1:,i+9] = np.real(val)
+                csv_table[1:,i+13] = np.imag(val)
+            else:
+                csv_table[1:,17:21] = np.real(np.array(vel['+K']))
+                csv_table[1:,21:25] = np.real(np.array(vel['-K']))
             IO_util.saveAsCSV(job_dir+file_name+'.csv',csv_table)
         '''
         calculate transmission coefficient
         '''
         t_start = time.time()
-        T_list = solver.calTransmission(job, kx, eigVal, eigVec, eigVecConj)
+        T_list = solver.calTransmission(job, kx, eigVal, eigVec, eigVecConj, job_name)
         print('Process: transmission ->',time.time()-t_start, '(sec)')
         '''
         plot output

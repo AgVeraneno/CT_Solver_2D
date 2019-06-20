@@ -136,7 +136,6 @@ def BarrierSolver(input_list):
         Calculate polarization
         '''
         print('Calculating polarization')
-        '''
         for E_idx, E in enumerate(input_list['E']):
             for v in ['+K', '-K']:
                 if v == '+K':
@@ -168,7 +167,7 @@ def BarrierSolver(input_list):
                 thisVel = worker2.vel_r[v][kx_idx][E_idx]
                 thisLambda = zone_list[-1].eigVal_list[v][E_idx]
                 ky = zone_list[-1].ky_list[v][E_idx]
-                i_state = worker2.findIncidentState(ky)
+                i_state, isW = worker2.findIncidentState(ky)
                 thisky = np.dot(ky, i_state)
                 if i_state != [0,0,0,0]:
                     # calculate Fermi distribution
@@ -185,7 +184,6 @@ def BarrierSolver(input_list):
                         Jr_tot_r[v][E_idx] += abs(f*thisVel*R)/grid_size
                 else:
                     worker2.f_r[v][kx_idx].append(None)
-        '''
         step_elapsed_time = time.time() - step_start_time
         print("\n1 step time:",step_elapsed_time, '(s)')
     worker2.JTf = Jt_tot_f
@@ -205,7 +203,7 @@ if __name__ == '__main__':
     kx1 = np.arange(-0.02, -0.00025, 1e-5)
     kx2 = np.arange(0.00025, 0.02, 1e-5)
     kx = np.append(kx1, kx2)
-    kx = [0.0035]
+    kx = [0.0035, -0.0035]
     #kx = np.arange(0.001, 0.008, 0.001)
     input_list = {
         # Assign plotter flag

@@ -14,30 +14,56 @@ class band_structure():
         self.H_type = setup['H_type']
         if not os.path.exists('../output/'):
             os.mkdir('../output/')
-    def genBand(self, E_sweep, job_sweep):
+    def genBand(self, E_sweep, job_sweep, isSingleThread=False):
         self.E_sweep = E_sweep
         self.job_sweep = job_sweep
-        job_name = self.current_job
         kx = self.dkx
-        with Pool(int(self.setup['CPU_threads'])) as mp:
-            val_list = mp.map(self.__sweepE__, E_sweep)
+        if isSingleThread:
+            for E in E_sweep:
+                val_list = self.__sweepE__(E)
+            else:
+                if len(E_sweep) == 1:
+                    val_list = [val_list]
+        else:
+            with Pool(int(self.setup['CPU_threads'])) as mp:
+                val_list = mp.map(self.__sweepE__, E_sweep)
         ## plot band structure
         eigVal = []
         eigVec = []
         eigVecConj = []
-        vel = []
         for zone in val_list[0]['zone']:
             eigVal.append([])
             eigVec.append([])
             eigVecConj.append([])
-            vel.append([])
             for idx in range(len(self.E_sweep)):
                 eigVal[zone].append(val_list[idx]['val'][zone])
                 eigVec[zone].append(val_list[idx]['vec'][zone])
-                vel[zone].append(val_list[idx]['vel'][zone])
             else:
                 eigVal[zone], eigVec[zone], eigVecConj[zone] = self.__sort__(eigVal[zone], eigVec[zone])
-        return eigVal, eigVec, eigVecConj, val_list[0]['zone'], vel
+        ## calculate velocity
+        H_parser = lib_material.Hamiltonian(self.setup)
+        vel_list = {'+K':[],'-K':[]}
+        for idx in range(len(self.E_sweep)):
+            vel_list['+K'].append([])
+            vel_list['-K'].append([])
+            for i in range(4):
+                ky = {'+K':eigVal[0]['+K'][idx][i],
+                      '-K':eigVal[0]['-K'][idx][i]}
+                if self.H_type == 'LN':
+                    H = H_parser.LN_velocity()
+                elif self.H_type == 'FZ':
+                    H = H_parser.FZ_velocity(kx, ky)
+                else:
+                    raise ValueError('Please give either LN or FZ')
+                ## K valley
+                psi = eigVec[0]['+K'][idx][:,i]
+                vel = np.vdot(psi, np.dot(H, psi))
+                vel_list['+K'][idx].append(vel)
+                ## K' valley
+                psi = eigVec[0]['-K'][idx][:,i]
+                vel = np.vdot(psi, np.dot(H, psi))
+                vel_list['-K'][idx].append(vel)
+        return eigVal, eigVec, eigVecConj, val_list[0]['zone'], vel_list
     def __sweepE__(self, E):
         job_name = self.current_job
         kx = self.dkx
@@ -59,13 +85,6 @@ class band_structure():
                     val, vec = np.linalg.eig(-np.dot(np.linalg.inv(Hp), Hi))
                     val_list['val'].append(val)
                     val_list['vec'].append(vec)
-                ## velocity
-                for i, ky in enumerate(val):
-                    H = H_parser.LN_velocity()
-                    psi = vec[:,i]
-                    psi_c = np.conj(vec[:,i])
-                    vel = np.dot(psi_c, np.dot(H, psi))
-                    val_list['vel'].append(vel)
             elif self.H_type == 'FZ':
                 if self.m_type == 'Zigzag':
                     ## eigenstates
@@ -77,13 +96,6 @@ class band_structure():
                                     [empty_matrix, Kn_vec]])
                     val_list['val'].append(val)
                     val_list['vec'].append(vec)
-                    ## velocity
-                    for i, ky in enumerate(val):
-                        H = H_parser.FZ_velocity(kx, ky)
-                        psi = vec[:,i]
-                        psi_c = np.conj(vec[:,i])
-                        vel = np.dot(psi_c, np.dot(H, psi))
-                        val_list['vel'].append(vel)
             else:
                 raise ValueError('Please give either LN or FZ')
         return val_list
@@ -110,6 +122,7 @@ class band_structure():
                 vec_conj_list['+K'].append(new_vec_conj)
                 ## K' valley
                 this_val = val[idx][4:8]/K
+                this_vel = vel[idx][4:8]
                 this_vec = vec[idx][:,4:8]
                 new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
                 val_list['-K'].append(new_val)
