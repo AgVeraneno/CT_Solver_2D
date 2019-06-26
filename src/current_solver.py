@@ -197,7 +197,7 @@ class current():
         sorted_E = sorted(E)
         thisE = sorted_E[2]
         if T > 10:
-            f = 1/(1+np.exp((thisE-(Ef+V)*1e-3*self.mat.q)/(self.mat.kB*self.Temp)))
+            f = 1/(1+np.exp((thisE-(Ef+V)*1e-3*self.mat.q)/(self.mat.kB*T)))
         else:
             if thisE <= (Ef+V)*1e-3*self.mat.q:
                 f = 1
