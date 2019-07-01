@@ -122,7 +122,6 @@ class band_structure():
                 vec_conj_list['+K'].append(new_vec_conj)
                 ## K' valley
                 this_val = val[idx][4:8]/K
-                this_vel = vel[idx][4:8]
                 this_vec = vec[idx][:,4:8]
                 new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
                 val_list['-K'].append(new_val)
