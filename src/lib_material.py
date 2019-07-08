@@ -180,7 +180,7 @@ class Hamiltonian():
         H0Kp = copy.deepcopy(empty_matrix)
         H0Kn = copy.deepcopy(empty_matrix)
         if self.m_type == 'Zigzag':
-            kx_term = np.cos(kx*self.mat.K_norm*self.mat.acc*3**0.5/2)
+            kx_term = np.cos((1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
             ky_term = np.exp(1.5j*ky*self.mat.acc)
             # ky independent terms (K valley)
             H0Kp[0,1] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
@@ -193,6 +193,7 @@ class Hamiltonian():
             H0Kp[2,2] = -gap+V-E
             H0Kp[3,3] = -gap+V-E
             # ky independent terms (K- valley)
+            kx_term = np.cos((-1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
             H0Kn[0,1] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
             H0Kn[0,3] = self.mat.r1*np.conj(ky_term**2)
             H0Kn[1,2] = -self.mat.r3*(1+2*np.conj(ky_term)*kx_term)

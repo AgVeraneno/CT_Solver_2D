@@ -60,16 +60,16 @@ class current():
             KpT = T[0]
             KnT = T[1]
             if isKpW:
-                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['+K'][0][3])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['+K'][0][3], '+K')
                 Jtp += abs(f*Kp_vel*KpT)
             else:
-                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['+K'][0][3])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['+K'][0][3], '+K')
                 Jtp += abs(f*Kp_vel*KpT)
             if isKnW:
-                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['-K'][0][3])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['-K'][0][3], '-K')
                 Jtn += abs(f*Kn_vel*KnT)
             else:
-                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['-K'][0][3])
+                f = self.getFermiDist(self.gap, E, self.V, kx, val[0]['-K'][0][3], '-K')
                 Jtn += abs(f*Kn_vel*KnT)
         else:
             return Jtp, Jtn
@@ -187,14 +187,17 @@ class current():
             else:
                 WKn = False
             return i_state, WKp, WKn
-    def getFermiDist(self, gap, E, V, kx, ky):
+    def getFermiDist(self, gap, E, V, kx, ky, valley):
         T = float(self.setup['Temp'])
         Ef = float(self.setup['Ef'])
         dkx = float(self.setup['dk_amp'])*np.cos(float(self.setup['dk_ang'])*np.pi/180)
         dky = float(self.setup['dk_amp'])*np.sin(float(self.setup['dk_ang'])*np.pi/180)
         H = self.H_parser.FZ_bulk(gap, E, V, kx-dkx, ky-dky)
         E, _ = np.linalg.eig(H)
-        sorted_E = sorted(E)
+        if valley == '+K':
+            sorted_E = sorted(E[0:4])
+        elif valley == '-K':
+            sorted_E = sorted(E[4:8])
         thisE = sorted_E[2]
         if T > 10:
             f = 1/(1+np.exp((thisE-(Ef+V)*1e-3*self.mat.q)/(self.mat.kB*T)))
@@ -203,6 +206,8 @@ class current():
                 f = 1
             else:
                 f = 0
+        if valley == '+K':
+            print(thisE, f)
         return f
     def calCurrent(self, i_state, T, Jinc, JT, JR):
         t_state = [0,1]*int(len(i_state)/2)
