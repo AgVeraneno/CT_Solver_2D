@@ -192,13 +192,12 @@ class current():
         Ef = float(self.setup['Ef'])
         dkx = float(self.setup['dk_amp'])*np.cos(float(self.setup['dk_ang'])*np.pi/180)
         dky = float(self.setup['dk_amp'])*np.sin(float(self.setup['dk_ang'])*np.pi/180)
-        H = self.H_parser.FZ_bulk(gap, E, V, kx-dkx, ky-dky)
-        E, _ = np.linalg.eig(H)
         if valley == '+K':
-            sorted_E = sorted(E[0:4])
+            E_eig, _ = np.linalg.eig(self.H_parser.FZ_bulk(gap, V, kx-dkx, ky-dky))
+            thisE = sorted(E_eig[0:4])[2]
         elif valley == '-K':
-            sorted_E = sorted(E[4:8])
-        thisE = sorted_E[2]
+            E_eig, _ = np.linalg.eig(self.H_parser.FZ_bulk(gap, V, kx-dkx, ky-dky))
+            thisE = sorted(E_eig[4:8])[2]
         if T > 10:
             f = 1/(1+np.exp((thisE-(Ef+V)*1e-3*self.mat.q)/(self.mat.kB*T)))
         else:
@@ -206,8 +205,6 @@ class current():
                 f = 1
             else:
                 f = 0
-        if valley == '+K':
-            print(thisE, f)
         return f
     def calCurrent(self, i_state, T, Jinc, JT, JR):
         t_state = [0,1]*int(len(i_state)/2)

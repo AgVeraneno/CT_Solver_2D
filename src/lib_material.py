@@ -57,6 +57,10 @@ class Hamiltonian():
         self.lattice = setup['Lattice']
         self.m_type = setup['Direction']
         self.H_type = setup['H_type']
+    def __ky2lamb__(self, ky, m=1):
+        phase_R = 1.5*m*np.real(ky)*self.mat.K_norm*self.mat.acc
+        phase_I = -1.5*m*np.imag(ky)*self.mat.K_norm*self.mat.acc
+        return np.cos(phase_R)*np.exp(phase_I)+1j*np.sin(phase_R)*np.exp(phase_I)
     def linearized(self, gap, E, V, kx, ky=0):
         ## variables
         E = E*1e-3*self.mat.q
@@ -170,9 +174,8 @@ class Hamiltonian():
                   [empty_matrix, H0Kn]]
             Hi = np.block(Hi)
             return Hi
-    def FZ_bulk(self, gap, E, V, kx, ky=0):
+    def FZ_bulk(self, gap, V, kx, ky=0):
         ## variables
-        E = E*1e-3*self.mat.q
         V = V*1e-3*self.mat.q
         gap = gap*1e-3*self.mat.q
         ## matrix
@@ -181,28 +184,29 @@ class Hamiltonian():
         H0Kn = copy.deepcopy(empty_matrix)
         if self.m_type == 'Zigzag':
             kx_term = np.cos((1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
-            ky_term = np.exp(1.5j*ky*self.mat.acc)
+            #ky_term = np.exp(1.5j*ky*self.mat.acc)
+            ky_term = self.__ky2lamb__(ky, -1)
             # ky independent terms (K valley)
-            H0Kp[0,1] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
-            H0Kp[0,3] = self.mat.r1*np.conj(ky_term**2)
-            H0Kp[1,2] = -self.mat.r3*(1+2*np.conj(ky_term)*kx_term)
-            H0Kp[2,3] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
+            H0Kp[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
+            H0Kp[0,3] = self.mat.r1*self.__ky2lamb__(ky, -2)
+            H0Kp[1,2] = -self.mat.r3*(1+2*ky_term*kx_term)
+            H0Kp[2,3] = -self.mat.r0*(1+2*ky_term*kx_term)
             H0Kp += np.transpose(np.conj(H0Kp))
-            H0Kp[0,0] = gap+V-E
-            H0Kp[1,1] = gap+V-E
-            H0Kp[2,2] = -gap+V-E
-            H0Kp[3,3] = -gap+V-E
+            H0Kp[0,0] = gap+V
+            H0Kp[1,1] = gap+V
+            H0Kp[2,2] = -gap+V
+            H0Kp[3,3] = -gap+V
             # ky independent terms (K- valley)
             kx_term = np.cos((-1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
-            H0Kn[0,1] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
-            H0Kn[0,3] = self.mat.r1*np.conj(ky_term**2)
-            H0Kn[1,2] = -self.mat.r3*(1+2*np.conj(ky_term)*kx_term)
-            H0Kn[2,3] = -self.mat.r0*(1+2*np.conj(ky_term)*kx_term)
+            H0Kn[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
+            H0Kn[0,3] = self.mat.r1*self.__ky2lamb__(ky, -2)
+            H0Kn[1,2] = -self.mat.r3*(1+2*ky_term*kx_term)
+            H0Kn[2,3] = -self.mat.r0*(1+2*ky_term*kx_term)
             H0Kn += np.transpose(np.conj(H0Kn))
-            H0Kn[0,0] = gap+V-E
-            H0Kn[1,1] = gap+V-E
-            H0Kn[2,2] = -gap+V-E
-            H0Kn[3,3] = -gap+V-E
+            H0Kn[0,0] = gap+V
+            H0Kn[1,1] = gap+V
+            H0Kn[2,2] = -gap+V
+            H0Kn[3,3] = -gap+V
             Hi = [[H0Kp, empty_matrix],
                   [empty_matrix, H0Kn]]
             return np.block(Hi)
@@ -293,7 +297,7 @@ class Hamiltonian():
             a = np.real(eigVal)
             b = np.imag(eigVal)
             ky = (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
-            return ky, newVec
+            return ky, newVec, eigVal
     def FZ_velocity(self, kx_in, ky_dict):
         kx = (1+kx_in)*self.mat.K_norm
         ky = ky_dict['+K']*self.mat.K_norm

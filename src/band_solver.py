@@ -88,8 +88,8 @@ class band_structure():
             elif self.H_type == 'FZ':
                 if self.m_type == 'Zigzag':
                     ## eigenstates
-                    Kp_val, Kp_vec = H_parser.FZ_band(gap, E, V, 1+kx)
-                    Kn_val, Kn_vec = H_parser.FZ_band(gap, E, V, -1+kx)
+                    Kp_val, Kp_vec, _ = H_parser.FZ_band(gap, E, V, 1+kx)
+                    Kn_val, Kn_vec, _ = H_parser.FZ_band(gap, E, V, -1+kx)
                     empty_matrix = np.zeros((4,4),dtype=np.complex128)
                     val = np.block([Kp_val, Kn_val])
                     vec = np.block([[Kp_vec, empty_matrix],
