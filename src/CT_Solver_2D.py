@@ -143,6 +143,6 @@ if __name__ == '__main__':
         '''
         t_start = time.time()
         JKp, JKn, P = solver.calTotalCurrent(T_list, eigVal, vel, job_name)
-        file_name = job_name+'_Total'
+        file_name = job_name+'_kx='+str(kx)+'_Total'
         IO_util.saveAsCSV(job_dir+file_name+'.csv', [['K',"K'","PT"],[JKp, JKn, P]])
     print('Calculation complete. Total time ->',time.time()-t0, '(sec)')
