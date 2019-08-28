@@ -26,7 +26,8 @@ def load_setup(setup_file, job_file):
              'dk_ang':None}
     job = {'gap':0,
            'length':0,
-           'mesh':0}
+           'mesh':0,
+           'V':0}
     '''
     import setup
     '''

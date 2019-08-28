@@ -30,12 +30,13 @@ class TwoDCT():
         # jobs
         self.job_sweep = {}
         for job_name, job in jobs.items():
-            self.job_sweep[job_name] = {'gap':[], 'length':[], 'V':[]}
+            self.job_sweep[job_name] = {'gap':[], 'length':[], 'V':[], 'Vgap':[]}
             mesh = [int(m) for m in job['mesh']]
             for idx, m in enumerate(mesh):
                 for i in range(int(m)):
                     self.job_sweep[job_name]['gap'].append(float(job['gap'][idx]))
                     self.job_sweep[job_name]['length'].append(float(job['length'][idx])/int(m))
+                    self.job_sweep[job_name]['Vgap'].append(float(job['V'][idx]))
             if setup['isLeadInclude']:
                 job_mesh = copy.deepcopy(job['mesh'])
                 i_lead = int(job_mesh.pop(0))

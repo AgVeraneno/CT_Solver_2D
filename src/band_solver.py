@@ -73,7 +73,7 @@ class band_structure():
         for idx, gap in enumerate(self.job_sweep[job_name]['gap']):
             val_list['zone'].append(idx)
             length = self.job_sweep[job_name]['length'][idx]
-            V = self.job_sweep[job_name]['V'][idx]
+            V = self.job_sweep[job_name]['V'][idx] + self.job_sweep[job_name]['Vgap'][idx]
             if self.H_type == 'LN':
                 if self.m_type == 'Zigzag':
                     Hi, Hp = H_parser.linearized(gap, E, V, kx)
