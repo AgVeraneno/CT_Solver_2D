@@ -12,6 +12,10 @@ class TwoDCT():
         self.m_type = setup['Direction']
         self.H_type = setup['H_type']
         self.dkx = float(setup['dk_amp'])*np.cos(float(setup['dk_ang'])*np.pi/180)
+        if self.lattice == 'MLG':
+            self.m_size = 2
+        elif self.lattice == 'BLG':
+            self.m_size = 4
     def __mesh__(self, setup, jobs):
         ## construct mesh
         # sweep parameters
@@ -101,16 +105,16 @@ if __name__ == '__main__':
                               "K'R1","K'R2","K'R3","K'R4","K'I1","K'I2","K'I3","K'I4",
                               "K1vel", "K2vel", "K3vel", "K4vel", "K'1vel", "K'2vel", "K'3vel", "K'4vel"]
             csv_table[1:,0] = solver.E_sweep
-            for i in range(4):
+            for i in range(solver.m_size):
                 val = np.array(eigVal[zone]['+K'])[:,i]
                 csv_table[1:,i+1] = np.real(val)
-                csv_table[1:,i+5] = np.imag(val)
+                csv_table[1:,i+solver.m_size+1] = np.imag(val)
                 val = np.array(eigVal[zone]['-K'])[:,i]
-                csv_table[1:,i+9] = np.real(val)
-                csv_table[1:,i+13] = np.imag(val)
+                csv_table[1:,i+2*solver.m_size+1] = np.real(val)
+                csv_table[1:,i+3*solver.m_size+1] = np.imag(val)
             else:
-                csv_table[1:,17:21] = np.real(np.array(vel['+K']))
-                csv_table[1:,21:25] = np.real(np.array(vel['-K']))
+                csv_table[1:,4*solver.m_size+1:5*solver.m_size+1] = np.real(np.array(vel['+K']))
+                csv_table[1:,5*solver.m_size+1:6*solver.m_size+1] = np.real(np.array(vel['-K']))
             IO_util.saveAsCSV(job_dir+file_name+'.csv',csv_table)
         '''
         calculate transmission coefficient

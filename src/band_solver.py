@@ -12,6 +12,10 @@ class band_structure():
         self.lattice = setup['Lattice']
         self.m_type = setup['Direction']
         self.H_type = setup['H_type']
+        if self.lattice == 'MLG':
+            self.m_size = 2
+        elif self.lattice == 'BLG':
+            self.m_size = 4
         if not os.path.exists('../output/'):
             os.mkdir('../output/')
     def genBand(self, E_sweep, job_sweep, isSingleThread=False):
@@ -46,7 +50,7 @@ class band_structure():
         for idx in range(len(self.E_sweep)):
             vel_list['+K'].append([])
             vel_list['-K'].append([])
-            for i in range(4):
+            for i in range(self.m_size):
                 ky = {'+K':eigVal[0]['+K'][idx][i],
                       '-K':eigVal[0]['-K'][idx][i]}
                 if self.H_type == 'LN':
@@ -90,7 +94,10 @@ class band_structure():
                     ## eigenstates
                     Kp_val, Kp_vec, _ = H_parser.FZ_band(gap, E, V, 1+kx)
                     Kn_val, Kn_vec, _ = H_parser.FZ_band(gap, E, V, -1+kx)
-                    empty_matrix = np.zeros((4,4),dtype=np.complex128)
+                    if self.lattice == 'MLG':
+                        empty_matrix = np.zeros((2,2),dtype=np.complex128)
+                    elif self.lattice == 'BLG':
+                        empty_matrix = np.zeros((4,4),dtype=np.complex128)
                     val = np.block([Kp_val, Kn_val])
                     vec = np.block([[Kp_vec, empty_matrix],
                                     [empty_matrix, Kn_vec]])
@@ -101,64 +108,122 @@ class band_structure():
         return val_list
 
     def __sort__(self, val, vec):
-        if self.H_type == 'LN':
-            '''
-            sort first energy eigenstate
-            the pattern will be: R1, T1, R2, T2
-            1. place -Re, -Re, Re, Re
-            2. if identical, place -Im, -Im, Im, Im
-            '''
-            K = self.setup['Material'].K_norm
-            val_list = {'+K':[],'-K':[]}
-            vec_list = {'+K':[],'-K':[]}
-            vec_conj_list = {'+K':[],'-K':[]}
-            for idx in range(len(self.E_sweep)):
-                ## K valley
-                this_val = val[idx][0:4]/K
-                this_vec = vec[idx][:,0:4]
-                new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
-                val_list['+K'].append(new_val)
-                vec_list['+K'].append(new_vec)
-                vec_conj_list['+K'].append(new_vec_conj)
-                ## K' valley
-                this_val = val[idx][4:8]/K
-                this_vec = vec[idx][:,4:8]
-                new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
-                val_list['-K'].append(new_val)
-                vec_list['-K'].append(new_vec)
-                vec_conj_list['-K'].append(new_vec_conj)
-            return val_list, vec_list, vec_conj_list
-        elif self.H_type == 'FZ':
-            '''
-            sort first energy eigenstate
-            the pattern will be: R1, T1, R2, T2
-            1. place -Re, -Re, Re, Re
-            2. if identical, place -Im, -Im, Im, Im
-            '''
-            K = self.setup['Material'].K_norm
-            val_list = {'+K':[],'-K':[]}
-            vec_list = {'+K':[],'-K':[]}
-            vec_conj_list = {'+K':[],'-K':[]}
-            for idx in range(len(self.E_sweep)):
-                ## K valley
-                this_val = val[idx][0:4]
-                this_vec = copy.deepcopy(vec[idx][:,0:4])
-                for i in range(4):
-                    this_vec[:,i] = vec[idx][:,i]/np.vdot(vec[idx][:,i],vec[idx][:,i])**0.5
-                new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
-                val_list['+K'].append(new_val)
-                vec_list['+K'].append(new_vec)
-                vec_conj_list['+K'].append(new_vec_conj)
-                ## K' valley
-                this_val = val[idx][4:8]
-                this_vec = copy.deepcopy(vec[idx][:,4:8])
-                for i in range(4,8):
-                    this_vec[:,i-4] = vec[idx][:,i]/np.vdot(vec[idx][:,i],vec[idx][:,i])**0.5
-                new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
-                val_list['-K'].append(new_val)
-                vec_list['-K'].append(new_vec)
-                vec_conj_list['-K'].append(new_vec_conj)
-            return val_list, vec_list, vec_conj_list
+        if self.lattice == 'MLG':
+            if self.H_type == 'LN':
+                '''
+                sort first energy eigenstate
+                the pattern will be: R1, T1, R2, T2
+                1. place -Re, -Re, Re, Re
+                2. if identical, place -Im, -Im, Im, Im
+                '''
+                K = self.setup['Material'].K_norm
+                val_list = {'+K':[],'-K':[]}
+                vec_list = {'+K':[],'-K':[]}
+                vec_conj_list = {'+K':[],'-K':[]}
+                for idx in range(len(self.E_sweep)):
+                    ## K valley
+                    this_val = val[idx][0:2]/K
+                    this_vec = vec[idx][:,0:2]
+                    new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
+                    val_list['+K'].append(new_val)
+                    vec_list['+K'].append(new_vec)
+                    vec_conj_list['+K'].append(new_vec_conj)
+                    ## K' valley
+                    this_val = val[idx][2:4]/K
+                    this_vec = vec[idx][:,2:4]
+                    new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
+                    val_list['-K'].append(new_val)
+                    vec_list['-K'].append(new_vec)
+                    vec_conj_list['-K'].append(new_vec_conj)
+                return val_list, vec_list, vec_conj_list
+            elif self.H_type == 'FZ':
+                '''
+                sort first energy eigenstate
+                the pattern will be: R1, T1, R2, T2
+                1. place -Re, -Re, Re, Re
+                2. if identical, place -Im, -Im, Im, Im
+                '''
+                K = self.setup['Material'].K_norm
+                val_list = {'+K':[],'-K':[]}
+                vec_list = {'+K':[],'-K':[]}
+                vec_conj_list = {'+K':[],'-K':[]}
+                for idx in range(len(self.E_sweep)):
+                    ## K valley
+                    this_val = val[idx][0:2]
+                    this_vec = copy.deepcopy(vec[idx][:,0:2])
+                    for i in range(2):
+                        this_vec[:,i] = vec[idx][:,i]/np.vdot(vec[idx][:,i],vec[idx][:,i])**0.5
+                    val_list['+K'].append(this_val)
+                    vec_list['+K'].append(this_vec)
+                    vec_conj_list['+K'].append(np.conj(vec))
+                    ## K' valley
+                    this_val = val[idx][2:4]
+                    this_vec = copy.deepcopy(vec[idx][:,2:4])
+                    for i in range(2,4):
+                        this_vec[:,i-2] = vec[idx][:,i]/np.vdot(vec[idx][:,i],vec[idx][:,i])**0.5
+                    val_list['-K'].append(this_val)
+                    vec_list['-K'].append(this_vec)
+                    vec_conj_list['-K'].append(np.conj(vec))
+                return val_list, vec_list, vec_conj_list
+        elif self.lattice == 'BLG':
+            if self.H_type == 'LN':
+                '''
+                sort first energy eigenstate
+                the pattern will be: R1, T1, R2, T2
+                1. place -Re, -Re, Re, Re
+                2. if identical, place -Im, -Im, Im, Im
+                '''
+                K = self.setup['Material'].K_norm
+                val_list = {'+K':[],'-K':[]}
+                vec_list = {'+K':[],'-K':[]}
+                vec_conj_list = {'+K':[],'-K':[]}
+                for idx in range(len(self.E_sweep)):
+                    ## K valley
+                    this_val = val[idx][0:4]/K
+                    this_vec = vec[idx][:,0:4]
+                    new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
+                    val_list['+K'].append(new_val)
+                    vec_list['+K'].append(new_vec)
+                    vec_conj_list['+K'].append(new_vec_conj)
+                    ## K' valley
+                    this_val = val[idx][4:8]/K
+                    this_vec = vec[idx][:,4:8]
+                    new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
+                    val_list['-K'].append(new_val)
+                    vec_list['-K'].append(new_vec)
+                    vec_conj_list['-K'].append(new_vec_conj)
+                return val_list, vec_list, vec_conj_list
+            elif self.H_type == 'FZ':
+                '''
+                sort first energy eigenstate
+                the pattern will be: R1, T1, R2, T2
+                1. place -Re, -Re, Re, Re
+                2. if identical, place -Im, -Im, Im, Im
+                '''
+                K = self.setup['Material'].K_norm
+                val_list = {'+K':[],'-K':[]}
+                vec_list = {'+K':[],'-K':[]}
+                vec_conj_list = {'+K':[],'-K':[]}
+                for idx in range(len(self.E_sweep)):
+                    ## K valley
+                    this_val = val[idx][0:4]
+                    this_vec = copy.deepcopy(vec[idx][:,0:4])
+                    for i in range(4):
+                        this_vec[:,i] = vec[idx][:,i]/np.vdot(vec[idx][:,i],vec[idx][:,i])**0.5
+                    new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
+                    val_list['+K'].append(new_val)
+                    vec_list['+K'].append(new_vec)
+                    vec_conj_list['+K'].append(new_vec_conj)
+                    ## K' valley
+                    this_val = val[idx][4:8]
+                    this_vec = copy.deepcopy(vec[idx][:,4:8])
+                    for i in range(4,8):
+                        this_vec[:,i-4] = vec[idx][:,i]/np.vdot(vec[idx][:,i],vec[idx][:,i])**0.5
+                    new_val, new_vec, new_vec_conj = self.__sort_rule__(idx, this_val, this_vec)
+                    val_list['-K'].append(new_val)
+                    vec_list['-K'].append(new_vec)
+                    vec_conj_list['-K'].append(new_vec_conj)
+                return val_list, vec_list, vec_conj_list
     def __sort_rule__(self, idx, this_val, this_vec):
         new_val = copy.deepcopy(this_val)*0
         new_vec = copy.deepcopy(this_vec)*0

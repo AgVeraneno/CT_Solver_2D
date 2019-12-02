@@ -179,37 +179,58 @@ class Hamiltonian():
         V = V*1e-3*self.mat.q
         gap = gap*1e-3*self.mat.q
         ## matrix
-        empty_matrix = np.zeros((4,4),dtype=np.complex128)
-        H0Kp = copy.deepcopy(empty_matrix)
-        H0Kn = copy.deepcopy(empty_matrix)
-        if self.m_type == 'Zigzag':
-            kx_term = np.cos((1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
-            #ky_term = np.exp(1.5j*ky*self.mat.acc)
-            ky_term = self.__ky2lamb__(ky, -1)
-            # ky independent terms (K valley)
-            H0Kp[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
-            H0Kp[0,3] = self.mat.r1*self.__ky2lamb__(ky, -2)
-            H0Kp[1,2] = -self.mat.r3*(1+2*ky_term*kx_term)
-            H0Kp[2,3] = -self.mat.r0*(1+2*ky_term*kx_term)
-            H0Kp += np.transpose(np.conj(H0Kp))
-            H0Kp[0,0] = gap+V
-            H0Kp[1,1] = gap+V
-            H0Kp[2,2] = -gap+V
-            H0Kp[3,3] = -gap+V
-            # ky independent terms (K- valley)
-            kx_term = np.cos((-1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
-            H0Kn[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
-            H0Kn[0,3] = self.mat.r1*self.__ky2lamb__(ky, -2)
-            H0Kn[1,2] = -self.mat.r3*(1+2*ky_term*kx_term)
-            H0Kn[2,3] = -self.mat.r0*(1+2*ky_term*kx_term)
-            H0Kn += np.transpose(np.conj(H0Kn))
-            H0Kn[0,0] = gap+V
-            H0Kn[1,1] = gap+V
-            H0Kn[2,2] = -gap+V
-            H0Kn[3,3] = -gap+V
-            Hi = [[H0Kp, empty_matrix],
-                  [empty_matrix, H0Kn]]
-            return np.block(Hi)
+        if self.lattice == 'MLG':
+            empty_matrix = np.zeros((2,2),dtype=np.complex128)
+            H0Kp = copy.deepcopy(empty_matrix)
+            H0Kn = copy.deepcopy(empty_matrix)
+            if self.m_type == 'Zigzag':
+                kx_term = np.cos((1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
+                ky_term = self.__ky2lamb__(ky, -1)
+                # ky independent terms (K valley)
+                H0Kp[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
+                H0Kp += np.transpose(np.conj(H0Kp))
+                H0Kp[0,0] = gap+V
+                H0Kp[1,1] = -gap+V
+                # ky independent terms (K- valley)
+                kx_term = np.cos((-1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
+                H0Kn[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
+                H0Kn += np.transpose(np.conj(H0Kn))
+                H0Kn[0,0] = gap+V
+                H0Kn[1,1] = -gap+V
+                Hi = [[H0Kp, empty_matrix],
+                      [empty_matrix, H0Kn]]
+                return np.block(Hi)
+        elif self.lattice == 'BLG':
+            empty_matrix = np.zeros((4,4),dtype=np.complex128)
+            H0Kp = copy.deepcopy(empty_matrix)
+            H0Kn = copy.deepcopy(empty_matrix)
+            if self.m_type == 'Zigzag':
+                kx_term = np.cos((1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
+                ky_term = self.__ky2lamb__(ky, -1)
+                # ky independent terms (K valley)
+                H0Kp[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
+                H0Kp[0,3] = self.mat.r1*self.__ky2lamb__(ky, -2)
+                H0Kp[1,2] = -self.mat.r3*(1+2*ky_term*kx_term)
+                H0Kp[2,3] = -self.mat.r0*(1+2*ky_term*kx_term)
+                H0Kp += np.transpose(np.conj(H0Kp))
+                H0Kp[0,0] = gap+V
+                H0Kp[1,1] = gap+V
+                H0Kp[2,2] = -gap+V
+                H0Kp[3,3] = -gap+V
+                # ky independent terms (K- valley)
+                kx_term = np.cos((-1+kx)*self.mat.K_norm*self.mat.acc*3**0.5/2)
+                H0Kn[0,1] = -self.mat.r0*(1+2*ky_term*kx_term)
+                H0Kn[0,3] = self.mat.r1*self.__ky2lamb__(ky, -2)
+                H0Kn[1,2] = -self.mat.r3*(1+2*ky_term*kx_term)
+                H0Kn[2,3] = -self.mat.r0*(1+2*ky_term*kx_term)
+                H0Kn += np.transpose(np.conj(H0Kn))
+                H0Kn[0,0] = gap+V
+                H0Kn[1,1] = gap+V
+                H0Kn[2,2] = -gap+V
+                H0Kn[3,3] = -gap+V
+                Hi = [[H0Kp, empty_matrix],
+                      [empty_matrix, H0Kn]]
+                return np.block(Hi)
     def FZ_band(self, gap, E, V, kx, ky=0):
         ## variables
         E = E*1e-3*self.mat.q
@@ -217,119 +238,161 @@ class Hamiltonian():
         gap = gap*1e-3*self.mat.q
         gapA = -gap+V
         gapB = gap+V
-        if self.m_type == 'Zigzag':
-            kx_term = np.cos(kx*self.mat.K_norm*self.mat.acc*3**0.5/2)
-            ## 4 by 4 matrix
-            H0 = np.zeros((4,4), dtype=np.complex128)
-            H0[0][0] = gapA - E
-            H0[0][1] = -self.mat.r0
-            H0[1][0] = -2*self.mat.r0*kx_term
-            H0[2][1] = -2*self.mat.r3*kx_term
-            H0[3][0] = self.mat.r1
-            H1 = np.zeros((4,4), dtype=np.complex128)
-            H1[0][1] = -2*self.mat.r0*kx_term
-            H1[1][0] = -self.mat.r0
-            H1[1][1] = gapA - E
-            H1[1][0] = -self.mat.r3
-            H1[2][1] = -self.mat.r3
-            H1[2][2] = gapB - E
-            H1[2][3] = -self.mat.r0
-            H1[3][2] = -2*self.mat.r0*kx_term
-            H2 = np.zeros((4,4), dtype=np.complex128)
-            H2[0][3] = self.mat.r1
-            H2[1][2] = -2*self.mat.r3*kx_term
-            H2[2][3] = -2*self.mat.r0*kx_term
-            H2[3][2] = -self.mat.r0
-            H2[3][3] = gapB - E
-            '''
-            travel along armchair edge
-            interface with zigzag edge
-            '''
-            multiper = self.mat.r3/(-2*self.mat.r0*kx_term)
-            Ha0 = np.zeros((2,2), dtype=np.complex128)
-            Ha0[0][0] = gapA - E
-            Ha0[0][1] = -self.mat.r0
-            Ha0[1][0] = -2*self.mat.r0*kx_term+multiper*self.mat.r1
-            Ha0[1][1] = 0
-            Ha1 = np.zeros((2,2), dtype=np.complex128)
-            Ha1[0][0] = 0
-            Ha1[0][1] = -2*self.mat.r0*kx_term
-            Ha1[1][0] = -self.mat.r0
-            Ha1[1][1] = gapA - E
-            Ha2 = np.zeros((2,2), dtype=np.complex128)
-            Ha2[0][0] = 0
-            Ha2[0][1] = self.mat.r1
-            Ha2[1][0] = -2*self.mat.r3*kx_term+multiper*(-self.mat.r0)
-            Ha2[1][1] = (gapB - E)*multiper
-            Hb0 = np.zeros((2,2), dtype=np.complex128)
-            Hb0[0][0] = (gapA - E)*multiper
-            Hb0[0][1] = -2*self.mat.r3*kx_term+multiper*(-self.mat.r0)
-            Hb0[1][0] = self.mat.r1
-            Hb0[1][1] = 0
-            Hb1 = np.zeros((2,2), dtype=np.complex128)
-            Hb1[0][0] = gapB - E
-            Hb1[0][1] = -self.mat.r0
-            Hb1[1][0] = -2*self.mat.r0*kx_term
-            Hb1[1][1] = 0
-            Hb2 = np.zeros((2,2), dtype=np.complex128)
-            Hb2[0][0] = 0
-            Hb2[0][1] = -2*self.mat.r0*kx_term+multiper*self.mat.r1
-            Hb2[1][0] = -self.mat.r0
-            Hb2[1][1] = gapB - E
-            ## calculate psi 1
-            Hc0 = -np.dot(Hb1, np.dot(np.linalg.inv(Ha2), Ha0))
-            Hc1 = Hb0 - np.dot(Hb1, np.dot(np.linalg.inv(Ha2), Ha1)) - np.dot(Hb2, np.dot(np.linalg.inv(Ha2), Ha0))
-            Hc2 = -np.dot(Hb2, np.dot(np.linalg.inv(Ha2), Ha1))
-            
-            H = np.zeros((4,4), dtype=np.complex128)
-            H[0][2] = 1
-            H[1][3] = 1
-            H[2:4, 0:2] = np.dot(np.linalg.inv(-Hc0), Hc2)
-            H[2:4, 2:4] = np.dot(np.linalg.inv(-Hc0), Hc1)
-            eigVal, eigVec = np.linalg.eig(H)
-            eigVec2=np.zeros((4,4), dtype=np.complex128)
-            for l_idx, l in enumerate(eigVal):
-                eigVec2[0:2,l_idx] = np.dot(np.linalg.inv(-Ha2), np.dot(Ha0*l**2 + Ha1*l, eigVec[0:2,l_idx]))
-            newVec = np.zeros((4,4), dtype=np.complex128)
-            newVec[0:2,:] = eigVec[0:2, :]
-            newVec[2:4,:] = eigVec2[0:2, :]
-            ## convert lambda to ky
-            a = np.real(eigVal)
-            b = np.imag(eigVal)
-            ky = (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
-            return ky, newVec, eigVal
+        if self.lattice == 'MLG':
+            if self.m_type == 'Zigzag':
+                kx_term = np.cos(kx*self.mat.K_norm*self.mat.acc*3**0.5/2)
+                ## 2 by 2 matrix
+                H0 = np.zeros((2,2), dtype=np.complex128)
+                H0[0][0] = gapA - E
+                H0[0][1] = -self.mat.r0
+                H0[1][0] = -2*self.mat.r0*kx_term
+                H0[1][1] = 0
+                H1 = np.zeros((2,2), dtype=np.complex128)
+                H1[0][0] = 0
+                H1[0][1] = 2*self.mat.r0*kx_term
+                H1[1][0] = self.mat.r0
+                H1[1][1] = -(gapB - E)
+                ## get eigenstates
+                eigVal, newVec = np.linalg.eig(np.linalg.inv(H0)*H1)
+                a = np.real(eigVal)
+                b = np.imag(eigVal)
+                ky = (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+                return ky, newVec, eigVal
+        elif self.lattice == 'BLG':
+            if self.m_type == 'Zigzag':
+                kx_term = np.cos(kx*self.mat.K_norm*self.mat.acc*3**0.5/2)
+                ## 4 by 4 matrix
+                H0 = np.zeros((4,4), dtype=np.complex128)
+                H0[0][0] = gapA - E
+                H0[0][1] = -self.mat.r0
+                H0[1][0] = -2*self.mat.r0*kx_term
+                H0[2][1] = -2*self.mat.r3*kx_term
+                H0[3][0] = self.mat.r1
+                H1 = np.zeros((4,4), dtype=np.complex128)
+                H1[0][1] = -2*self.mat.r0*kx_term
+                H1[1][0] = -self.mat.r0
+                H1[1][1] = gapA - E
+                H1[1][0] = -self.mat.r3
+                H1[2][1] = -self.mat.r3
+                H1[2][2] = gapB - E
+                H1[2][3] = -self.mat.r0
+                H1[3][2] = -2*self.mat.r0*kx_term
+                H2 = np.zeros((4,4), dtype=np.complex128)
+                H2[0][3] = self.mat.r1
+                H2[1][2] = -2*self.mat.r3*kx_term
+                H2[2][3] = -2*self.mat.r0*kx_term
+                H2[3][2] = -self.mat.r0
+                H2[3][3] = gapB - E
+                '''
+                travel along armchair edge
+                interface with zigzag edge
+                '''
+                multiper = self.mat.r3/(-2*self.mat.r0*kx_term)
+                Ha0 = np.zeros((2,2), dtype=np.complex128)
+                Ha0[0][0] = gapA - E
+                Ha0[0][1] = -self.mat.r0
+                Ha0[1][0] = -2*self.mat.r0*kx_term+multiper*self.mat.r1
+                Ha0[1][1] = 0
+                Ha1 = np.zeros((2,2), dtype=np.complex128)
+                Ha1[0][0] = 0
+                Ha1[0][1] = -2*self.mat.r0*kx_term
+                Ha1[1][0] = -self.mat.r0
+                Ha1[1][1] = gapA - E
+                Ha2 = np.zeros((2,2), dtype=np.complex128)
+                Ha2[0][0] = 0
+                Ha2[0][1] = self.mat.r1
+                Ha2[1][0] = -2*self.mat.r3*kx_term+multiper*(-self.mat.r0)
+                Ha2[1][1] = (gapB - E)*multiper
+                Hb0 = np.zeros((2,2), dtype=np.complex128)
+                Hb0[0][0] = (gapA - E)*multiper
+                Hb0[0][1] = -2*self.mat.r3*kx_term+multiper*(-self.mat.r0)
+                Hb0[1][0] = self.mat.r1
+                Hb0[1][1] = 0
+                Hb1 = np.zeros((2,2), dtype=np.complex128)
+                Hb1[0][0] = gapB - E
+                Hb1[0][1] = -self.mat.r0
+                Hb1[1][0] = -2*self.mat.r0*kx_term
+                Hb1[1][1] = 0
+                Hb2 = np.zeros((2,2), dtype=np.complex128)
+                Hb2[0][0] = 0
+                Hb2[0][1] = -2*self.mat.r0*kx_term+multiper*self.mat.r1
+                Hb2[1][0] = -self.mat.r0
+                Hb2[1][1] = gapB - E
+                ## calculate psi 1
+                Hc0 = -np.dot(Hb1, np.dot(np.linalg.inv(Ha2), Ha0))
+                Hc1 = Hb0 - np.dot(Hb1, np.dot(np.linalg.inv(Ha2), Ha1)) - np.dot(Hb2, np.dot(np.linalg.inv(Ha2), Ha0))
+                Hc2 = -np.dot(Hb2, np.dot(np.linalg.inv(Ha2), Ha1))
+                
+                H = np.zeros((4,4), dtype=np.complex128)
+                H[0][2] = 1
+                H[1][3] = 1
+                H[2:4, 0:2] = np.dot(np.linalg.inv(-Hc0), Hc2)
+                H[2:4, 2:4] = np.dot(np.linalg.inv(-Hc0), Hc1)
+                eigVal, eigVec = np.linalg.eig(H)
+                eigVec2=np.zeros((4,4), dtype=np.complex128)
+                for l_idx, l in enumerate(eigVal):
+                    eigVec2[0:2,l_idx] = np.dot(np.linalg.inv(-Ha2), np.dot(Ha0*l**2 + Ha1*l, eigVec[0:2,l_idx]))
+                newVec = np.zeros((4,4), dtype=np.complex128)
+                newVec[0:2,:] = eigVec[0:2, :]
+                newVec[2:4,:] = eigVec2[0:2, :]
+                ## convert lambda to ky
+                a = np.real(eigVal)
+                b = np.imag(eigVal)
+                ky = (2/(3*self.mat.acc)*np.arctan(b/a) - 1j/(3*self.mat.acc)*np.log(a**2+b**2))/self.mat.K_norm
+                return ky, newVec, eigVal
     def FZ_velocity(self, kx_in, ky_dict):
-        kx = (1+kx_in)*self.mat.K_norm
-        ky = ky_dict['+K']*self.mat.K_norm
-        v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
-        v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
-        ## K valley
-        H0Kp = np.zeros((4,4), dtype=np.complex128)
-        H0Kp[0][1] = -2*self.mat.r0*v1
-        H0Kp[0][3] = self.mat.r1*v2
-        H0Kp[1][0] = -2*self.mat.r0*np.conj(v1)
-        H0Kp[1][2] = -2*self.mat.r3*v1
-        H0Kp[2][1] = -2*self.mat.r3*np.conj(v1)
-        H0Kp[2][3] = -2*self.mat.r0*v1
-        H0Kp[3][0] = self.mat.r1*np.conj(v2)
-        H0Kp[3][2] = -2*self.mat.r0*np.conj(v1)
-        ## K' valley
-        kx = (-1+kx_in)*self.mat.K_norm
-        ky = ky_dict['-K']*self.mat.K_norm
-        v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
-        v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
-        H0Kn = np.zeros((4,4), dtype=np.complex128)
-        H0Kn[0][1] = -2*self.mat.r0*v1
-        H0Kn[0][3] = self.mat.r1*v2
-        H0Kn[1][0] = -2*self.mat.r0*np.conj(v1)
-        H0Kn[1][2] = -2*self.mat.r3*v1
-        H0Kn[2][1] = -2*self.mat.r3*np.conj(v1)
-        H0Kn[2][3] = -2*self.mat.r0*v1
-        H0Kn[3][0] = self.mat.r1*np.conj(v2)
-        H0Kn[3][2] = -2*self.mat.r0*np.conj(v1)
-        H0 = np.block([[H0Kp, np.zeros((4,4), dtype=np.complex128)],
-                       [np.zeros((4,4), dtype=np.complex128), H0Kn]])
-        return H0
+        if self.lattice == 'MLG':
+            kx = (1+kx_in)*self.mat.K_norm
+            ky = ky_dict['+K']*self.mat.K_norm
+            v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
+            v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
+            ## K valley
+            H0Kp = np.zeros((2,2), dtype=np.complex128)
+            H0Kp[0][1] = -2*self.mat.r0*v1
+            H0Kp[1][0] = -2*self.mat.r0*np.conj(v1)
+            ## K' valley
+            kx = (-1+kx_in)*self.mat.K_norm
+            ky = ky_dict['-K']*self.mat.K_norm
+            v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
+            v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
+            H0Kn = np.zeros((2,2), dtype=np.complex128)
+            H0Kn[0][1] = -2*self.mat.r0*v1
+            H0Kn[1][0] = -2*self.mat.r0*np.conj(v1)
+            H0 = np.block([[H0Kp, np.zeros((2,2), dtype=np.complex128)],
+                           [np.zeros((2,2), dtype=np.complex128), H0Kn]])
+            return H0
+        elif self.lattice == 'BLG':
+            kx = (1+kx_in)*self.mat.K_norm
+            ky = ky_dict['+K']*self.mat.K_norm
+            v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
+            v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
+            ## K valley
+            H0Kp = np.zeros((4,4), dtype=np.complex128)
+            H0Kp[0][1] = -2*self.mat.r0*v1
+            H0Kp[0][3] = self.mat.r1*v2
+            H0Kp[1][0] = -2*self.mat.r0*np.conj(v1)
+            H0Kp[1][2] = -2*self.mat.r3*v1
+            H0Kp[2][1] = -2*self.mat.r3*np.conj(v1)
+            H0Kp[2][3] = -2*self.mat.r0*v1
+            H0Kp[3][0] = self.mat.r1*np.conj(v2)
+            H0Kp[3][2] = -2*self.mat.r0*np.conj(v1)
+            ## K' valley
+            kx = (-1+kx_in)*self.mat.K_norm
+            ky = ky_dict['-K']*self.mat.K_norm
+            v1 = -1j*1.5*self.mat.acc*np.exp(-1j*ky*1.5*self.mat.acc)*np.cos(3**0.5/2*kx*self.mat.acc)
+            v2 = -3j*self.mat.acc*np.exp(-1j*ky*3*self.mat.acc)
+            H0Kn = np.zeros((4,4), dtype=np.complex128)
+            H0Kn[0][1] = -2*self.mat.r0*v1
+            H0Kn[0][3] = self.mat.r1*v2
+            H0Kn[1][0] = -2*self.mat.r0*np.conj(v1)
+            H0Kn[1][2] = -2*self.mat.r3*v1
+            H0Kn[2][1] = -2*self.mat.r3*np.conj(v1)
+            H0Kn[2][3] = -2*self.mat.r0*v1
+            H0Kn[3][0] = self.mat.r1*np.conj(v2)
+            H0Kn[3][2] = -2*self.mat.r0*np.conj(v1)
+            H0 = np.block([[H0Kp, np.zeros((4,4), dtype=np.complex128)],
+                           [np.zeros((4,4), dtype=np.complex128), H0Kn]])
+            return H0
     def J_op(self, kx, ky1, ky2, isLocal=True):
         if isLocal:
             ky_from = np.conj(ky1)*self.mat.K_norm
