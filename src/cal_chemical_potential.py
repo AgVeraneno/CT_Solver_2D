@@ -1,4 +1,4 @@
-import os, time, copy
+import sys, os, time, copy
 from multiprocessing import Pool
 import numpy as np
 import IO_util, lib_material
@@ -86,6 +86,6 @@ if __name__ == '__main__':
     setup_file = '../input/setup_CP.csv'
     job_file = '../input/job_2DCT.csv'
     setup, jobs = IO_util.load_setup(setup_file, job_file)
-    gap = 0
+    gap = 20
     V = 0
     CP_solver(setup, gap, V)
