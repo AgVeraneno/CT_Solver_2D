@@ -4,11 +4,11 @@ import numpy as np
 import IO_util, lib_material
 
 class CP_solver():
-    def __init__(self, setup, gap, V):
+    def __init__(self, setup):
         self.setup = setup
         self.mat = setup['Material']
-        self.gap = gap
-        self.V = V
+        self.gap = float(setup['V2'])
+        self.V = float(setup['V1'])
         self.Ef = float(setup['Ef'])*self.mat.q*1e-3
         self.Temp = self.mat.kB*float(setup['Temp'])
         self.kx_mesh = np.arange(float(setup['kx0']),float(setup['kxn'])+float(setup['dkx']),float(setup['dkx']))
@@ -26,7 +26,7 @@ class CP_solver():
         '''
         find chemical potential
         '''
-        self.mu = self.Ef
+        self.mu = 500*1.6e-19
         pre_mu = 0
         up_mu = self.mu
         down_mu = pre_mu
@@ -88,4 +88,4 @@ if __name__ == '__main__':
     setup, jobs = IO_util.load_setup(setup_file, job_file)
     gap = 20
     V = 0
-    CP_solver(setup, gap, V)
+    CP_solver(setup)
