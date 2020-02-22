@@ -22,29 +22,37 @@ class CP_solver():
             ND = mp.map(self.cal_concentration, range(mesh_size))
         nD = sum(ND)/(4*np.pi**2)
         t1 = time.time()
-        print('Carrier concentration:',np.format_float_scientific(nD*1e4),' 1/cm2; calculated time=',round(t1-t0,4),' (sec)')
+        #print('Carrier concentration:',np.format_float_scientific(nD*1e4),' 1/cm2; calculated time=',round(t1-t0,4),' (sec)')
         '''
         find chemical potential
         '''
-        self.mu = 2*self.Ef
+        self.mu = self.Ef
         down_mu = 0
-        pre_dn = 0
         counter = 0
         while counter <= 100:
             with Pool(processes=int(setup['CPU_threads'])) as mp:
                 NCV = mp.map(self.find_chemical_potential, range(mesh_size))
             NC = np.real(sum(np.array(NCV)[:,0])/(4*np.pi**2))
             NV = np.real(sum(np.array(NCV)[:,1])/(4*np.pi**2))
-            print('Try mu=',round(self.mu/self.mat.q*1e3,9),' (meV) --> difference = ',round(nD-NC+NV,6),'(NC=',NC,';NV=',NV,')')
-            if abs(nD-NC+NV) <= 1:# or round(abs(nD-NC+NV)-pre_dn,6) == 0:
+            #print('Try mu=',round(self.mu/self.mat.q*1e3,9),' (meV) --> difference = ',round(nD-NC+NV,6),'(NC=',NC,';NV=',NV,')')
+            if abs(nD-NC+NV) <= 1/(4*np.pi**2):
                 break
             elif np.real(nD-NC+NV) < 0:     # valance < conduction. reduce mu
+                pre_mu = copy.deepcopy(self.mu)
                 self.mu = (self.mu+down_mu)/2
             elif np.real(nD-NC+NV) > 0:     # valance > conduction. increase mu
                 down_mu = copy.deepcopy(self.mu)
-                self.mu += 0.001*1.6e-19
+                self.mu = (self.mu+pre_mu)/2
             pre_dn = abs(nD-NC+NV)
             counter += 1
+        tend = time.time()
+        print("=========Summary========")
+        print("Find Mu under ",round(float(self.setup['Temp']),3)," K")
+        print("nD = ",np.format_float_scientific(nD*1e4),' 1/cm2')
+        print("Mu = ",round(self.mu/self.mat.q*1e3,9),' (meV)')
+        print('Residue = ',round(nD-NC+NV,6)," (critera = ",round(1/(4*np.pi**2),3),")")
+        print('total search time:',round(tend-t1,3), ' (Sec); Case run = ',counter)
+        print("========================")
     def cal_concentration(self, k_idx):
         H_parser = lib_material.Hamiltonian(self.setup)
         e_count = 0
@@ -97,6 +105,4 @@ if __name__ == '__main__':
     setup_file = '../input/setup_CP.csv'
     job_file = '../input/job_2DCT.csv'
     setup, jobs = IO_util.load_setup(setup_file, job_file)
-    gap = 20
-    V = 0
     CP_solver(setup)
