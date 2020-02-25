@@ -21,8 +21,10 @@ class CP_solver():
         with Pool(processes=int(setup['CPU_threads'])) as mp:
             ND = mp.map(self.cal_concentration, range(mesh_size))
         nD = sum(ND)/(4*np.pi**2)
+        L = 2*np.pi/float(setup['dkx'])/self.mat.K_norm
+        N = nD/L**2*(4*np.pi**2)*1e-4
         t1 = time.time()
-        #print('Carrier concentration:',np.format_float_scientific(nD*1e4),' 1/cm2; calculated time=',round(t1-t0,4),' (sec)')
+        print('Carrier concentration:',np.format_float_scientific(N),' 1/cm2; calculated time=',round(t1-t0,4),' (sec)')
         '''
         find chemical potential
         '''
@@ -34,7 +36,7 @@ class CP_solver():
                 NCV = mp.map(self.find_chemical_potential, range(mesh_size))
             NC = np.real(sum(np.array(NCV)[:,0])/(4*np.pi**2))
             NV = np.real(sum(np.array(NCV)[:,1])/(4*np.pi**2))
-            #print('Try mu=',round(self.mu/self.mat.q*1e3,9),' (meV) --> difference = ',round(nD-NC+NV,6),'(NC=',NC,';NV=',NV,')')
+            print('Try mu=',round(self.mu/self.mat.q*1e3,9),' (meV) --> difference = ',round(nD-NC+NV,6),'(NC=',NC,';NV=',NV,')')
             if abs(nD-NC+NV) <= 1/(4*np.pi**2):
                 break
             elif np.real(nD-NC+NV) < 0:     # valance < conduction. reduce mu
@@ -48,7 +50,7 @@ class CP_solver():
         tend = time.time()
         print("=========Summary========")
         print("Find Mu under ",round(float(self.setup['Temp']),3)," K")
-        print("nD = ",np.format_float_scientific(nD*1e4),' 1/cm2')
+        print("nD = ",np.format_float_scientific(N),' 1/cm2')
         print("Mu = ",round(self.mu/self.mat.q*1e3,9),' (meV)')
         print('Residue = ',round(nD-NC+NV,6)," (critera = ",round(1/(4*np.pi**2),3),")")
         print('total search time:',round(tend-t1,3), ' (Sec); Case run = ',counter)
